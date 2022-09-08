@@ -1,0 +1,18 @@
+{
+    "name": "orlion/cat-agent-php",
+    "description": "php client for cat-agent",
+    "type": "library",
+    "license": "Apache-2.0",
+    "autoload": {
+        "psr-4": {
+            "Orlion\\CatAgentPhp\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Orlion",
+            "email": "orlionml@gmail.com"
+        }
+    ],
+    "require": {}
+}
