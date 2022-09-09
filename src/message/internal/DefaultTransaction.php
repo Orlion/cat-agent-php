@@ -69,4 +69,49 @@ class DefaultTransaction extends AbstractMessage implements Transaction
             return $duration;
         }
     }
+
+    public function getDurationInMillis(): int
+    {
+        return $this->getRawDurationInMicros() / 1000;
+    }
+
+    public function getManager()
+    {
+        // todo
+    }
+
+    public function getRawDurationInMicros(): int
+    {
+        return $this->durationInMicro;
+    }
+
+    public function hasChildren(): bool
+    {
+        return !empty($this->children);
+    }
+
+    private function isProblem(Transaction $t, MessageManager $manager, string $type, int $duration): bool
+    {
+        // todo
+    }
+
+    private function recordProblem(int $time, string $id): bool
+    {
+
+    }
+
+    public function setDurationInMicros(int $durationInMicros): void
+    {
+        $this->durationInMicro = $durationInMicros;
+    }
+
+    public function setDurationInMillis(int $durationInMills): void
+    {
+        $this->durationInMicro = $durationInMills * 1000;
+    }
+
+    public function setDurationStart(int $durationStart): void
+    {
+        $this->durationStart = $durationStart;
+    }
 }

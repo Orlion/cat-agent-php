@@ -2,7 +2,7 @@
 
 namespace Orlion\CatAgentPhp\Message;
 
-interface Event extends Message
+interface Heartbeat extends Message
 {
 
 }
