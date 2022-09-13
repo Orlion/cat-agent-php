@@ -24,7 +24,7 @@ interface Message
 
     public function isSuccess(): bool;
 
-    public function setStatsu(string $status): void;
+    public function setStatus(string $status): void;
 
     public function setSuccessStatus(): void;
 

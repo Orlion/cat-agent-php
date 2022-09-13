@@ -6,13 +6,9 @@ use Throwable;
 
 interface MessageProducer
 {
-    public function createMessageId(): string;
+    public function logError(Throwable $cause, string $message = ''): void;
 
-    public function createRpcServerId(string $domain): string;
-
-    public function logError(string $message, Throwable $cause = null): void;
-
-    public function logErrorWithCategory(string $category, string $message, Throwable $cause = null): void;
+    public function logErrorWithCategory(string $category, Throwable $cause, string $message = ''): void;
 
     public function logEvent(string $type, string $name, string $status = '', string $nameValuePairs = ''): void;
 
