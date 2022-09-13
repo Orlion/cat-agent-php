@@ -8,7 +8,6 @@ use Orlion\CatAgentPhp\Message\Transaction;
 use Orlion\CatAgentPhp\Message\Internal\DefaultMessageProducer;
 use Orlion\CatAgentPhp\Message\Internal\DefaultMessageManager;
 use Orlion\CatAgentPhp\Message\MessageManager;
-use Orlion\CatAgentPhp\Message\Trace;
 use Orlion\CatAgentPhp\Util\Time;
 use RuntimeException;
 use Throwable;
@@ -109,13 +108,6 @@ class CatAgent
     {
         if (self::isEnabled()) {
             return CatAgent::getProducer()->newEvent($type, $name);
-        }
-    }
-
-    public static function newTrace(string $type, string $name): Trace
-    {
-        if (self::isEnabled()) {
-            return CatAgent::getProducer()->newTrace($type, $name);
         }
     }
 

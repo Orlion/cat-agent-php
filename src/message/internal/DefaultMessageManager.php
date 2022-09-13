@@ -27,22 +27,17 @@ class DefaultMessageManager implements MessageManager
         return self::$instance;
     }
 
-    public function hasContext(): bool
-    {
-        return false;
-    }
-
-    public function setup(): void
-    {
-        
-    }
-
     public function start(Transaction $transaction): void
     {
-
+        $this->ctx->start($transaction);
     }
 
-    public function add(Message $message)
+    public function add(Message $message): void
+    {
+        $this->ctx->add($message);
+    }
+
+    public function flush(MessageTree $tree, bool $clearContext): void
     {
 
     }
@@ -60,14 +55,12 @@ class Context
     private $totalDurationInMicros;
     private $knownExceptions;
 
-    public function __construct(string $domain, string $hostName, string $ipAddress)
+    public function __construct(string $domain)
     {
         $this->tree = new DefaultMessageTree();
         $this->stack = new SplStack();
 
         $this->tree->setDomain($domain);
-        $this->tree->setHostName($hostName);
-        $this->tree->setIpAddress($ipAddress);
 
         $this->length = 1;
     }
@@ -82,25 +75,26 @@ class Context
         } else {
             $parent = $this->stack->top();
 
-            
+            $this->addTransactionChild($message, $parent);
         }
     }
 
     private function addTransactionChild(Message $message, Transaction $transaction): void
     {
-        $treePeriod = $this->tree->getMessage()->getTimestamp() / self::HOUR;
-        $messagePeriod = ($message->getTimestamp() - 10 * 1000) / self::HOUR;
-
-        if ($treePeriod < $messagePeriod || $this->length >= self::SIZE) {
-
-        }
+        $transaction->addChild($transaction);
+        $this->length++;
     }
-}
 
-class TransactionHelper
-{
-    public function truncateAndFlush(Context $ctx, int $timestamp): void
+    public function start(Transaction $transaction)
     {
+        if (!$this->stack->isEmpty()) {
+            $parent = $this->stack->top();
+            $this->addTransactionChild($transaction, $parent);
+        } else {
+            $this->tree->setMessage($transaction);
+        }
 
+        $this->stack->push($transaction);
     }
 }
+
