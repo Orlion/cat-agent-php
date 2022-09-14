@@ -3,6 +3,7 @@
 namespace Orlion\CatAgentPhp\Message\Internal;
 
 use Orlion\CatAgentPhp\Message\Message;
+use Orlion\CatAgentPhp\Message\MessageManager;
 use Orlion\CatAgentPhp\Message\Transaction;
 use Orlion\CatAgentPhp\Util\Time;
 
@@ -12,12 +13,12 @@ class DefaultTransaction extends AbstractMessage implements Transaction
     private $durationStart = 0;
     private $children = [];
     private $manager;
-    private $map = [];
 
-    public function __construct(string $type, string $name)
+    public function __construct(string $type, string $name, MessageManager $manager)
     {
         parent::__construct($type, $name);
 
+        $this->manager = $manager;
         $this->durationStart = Time::currentTimeMicro();
     }
 
@@ -29,17 +30,13 @@ class DefaultTransaction extends AbstractMessage implements Transaction
 
     public function complete(): void
     {
-        if ($this->isCompleted()) {
-
-        } else {
+        if (!$this->isCompleted()) {
             if ($this->durationInMicro == -1) {
                 $this->durationInMicro = (Time::currentTimeMicro() - $this->durationStart) / 1000;
             }
             $this->setComplete(true);
 
-            if (!is_null($this->manager)) {
-                // TODO
-            }
+            $this->manager->end($this);
         }
     }
 
@@ -75,11 +72,6 @@ class DefaultTransaction extends AbstractMessage implements Transaction
         return $this->getRawDurationInMicros() / 1000;
     }
 
-    public function getManager()
-    {
-        // todo
-    }
-
     public function getRawDurationInMicros(): int
     {
         return $this->durationInMicro;
@@ -88,16 +80,6 @@ class DefaultTransaction extends AbstractMessage implements Transaction
     public function hasChildren(): bool
     {
         return !empty($this->children);
-    }
-
-    private function isProblem(Transaction $t, MessageManager $manager, string $type, int $duration): bool
-    {
-        // todo
-    }
-
-    private function recordProblem(int $time, string $id): bool
-    {
-
     }
 
     public function setDurationInMicros(int $durationInMicros): void

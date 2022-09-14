@@ -19,8 +19,7 @@ class DefaultMetric extends AbstractMessage implements Metric
     public function complete(): void
     {
         $this->setComplete(true);
-        if (!is_null($this->manager)) {
-            $this->manager->add($this);
-        }
+        
+        $this->manager->add($this);
     }
 }

@@ -9,7 +9,7 @@ class DefaultEvent extends AbstractMessage implements Event
 {
     private $manager;
 
-    public function __construct(string $type, string $name, MessageManager $manager = null)
+    public function __construct(string $type, string $name, MessageManager $manager)
     {
         parent::__construct($type, $name);
 
@@ -20,8 +20,6 @@ class DefaultEvent extends AbstractMessage implements Event
     {
         $this->setComplete(true);
 
-        if (!is_null($this->manager)) {
-            $this->manager->add($this);
-        }
+        $this->manager->add($this);
     }
 }

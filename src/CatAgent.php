@@ -19,7 +19,7 @@ class CatAgent
     private static $enabled;
     private static $init = false;
 
-    public static function init(): void
+    public static function init(string $domain, string $server): void
     {
         if (!self::$init) {
             self::$producer = DefaultMessageProducer::getInstance();

@@ -12,8 +12,6 @@ interface MessageProducer
 
     public function logEvent(string $type, string $name, string $status = '', string $nameValuePairs = ''): void;
 
-    public function logHeartbeat(string $type, string $name, string $status, string $nameValuePairs): void;
-
     public function logMetric(string $type, string $name, string $nameValuePairs): void;
 
     public function newEvent(string $type, string $name): Event;
