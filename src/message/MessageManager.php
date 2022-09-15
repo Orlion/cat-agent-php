@@ -8,4 +8,6 @@ interface MessageManager {
     public function end(Transaction $transaction): void;
 
     public function start(Transaction $transaction): void;
+
+    public function getMessageTree(): MessageTree;
 }

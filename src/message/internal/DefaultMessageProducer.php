@@ -12,10 +12,22 @@ use Throwable;
 class DefaultMessageProducer implements MessageProducer
 {
     private $manager;
+    private $factory;
 
     private function __construct(MessageManager $manager)
     {
         $this->manager = $manager;
+        $this->factory = MessageIdFactory::getInstance();
+    }
+
+    public function createMessageId(): string
+    {
+        return $this->factory->getNextId();
+    }
+
+    public function createRpcMessageId(string $domain): string
+    {
+        return $this->factory->getNextId($domain);
     }
 
     public function logError(Throwable $cause, string $message = ''): void

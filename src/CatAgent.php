@@ -2,6 +2,7 @@
 
 namespace Orlion\CatAgentPhp;
 
+use Exception;
 use Orlion\CatAgentPhp\Message\Event;
 use Orlion\CatAgentPhp\Message\MessageProducer;
 use Orlion\CatAgentPhp\Message\Transaction;
@@ -16,16 +17,20 @@ class CatAgent
 {
     private static $producer;
     private static $manager;
-    private static $enabled;
+    private static $enabled = true;
     private static $init = false;
 
     public static function init(string $domain, string $server): void
     {
         if (!self::$init) {
-            self::$producer = DefaultMessageProducer::getInstance();
-            self::$manager = DefaultMessageManager::getInstance();
-
-            self::$init = true;
+            try {
+                self::$manager = new DefaultMessageManager($domain, $server);
+                self::$producer = new DefaultMessageProducer(self::$manager);
+                
+                self::$init = true;
+            } catch (Exception $e) {
+                self::disable();
+            }
         }
     }
     
@@ -86,24 +91,6 @@ class CatAgent
         }
     }
 
-    public static function logMetricForCount(string $name, int $quantity = 0): void
-    {
-        if (self::isEnabled()) {
-            self::checkInitialize();
-
-            // todo
-        }
-    }
-
-    public static function logMetricForDuration(string $name, int $durationInMills, array $tags = []): void
-    {
-        if (self::isEnabled()) {
-            self::checkInitialize();
-
-            // todo
-        }
-    }
-
     public static function newEvent(string $type, string $name): Event
     {
         if (self::isEnabled()) {
@@ -130,6 +117,51 @@ class CatAgent
             }
 
             return $transaction;
+        }
+    }
+
+    public static function logRemoteCallClient(CatAgentContext $ctx, string $domain)
+    {
+        if (self::isEnabled()) {
+            $tree = CatAgent::getManager()->getMessageTree();
+            $messageId = $tree->getMessageId();
+
+            if (is_null($messageId)) {
+                $messageId = CatAgent::getProducer()->createMessageId();
+                $tree->setMessageId($messageId);
+            }
+
+            $childId = CatAgent::getProducer()->createRpcMessageId($domain);
+            CatAgent::logEvent(CatAgentConstants::TYPE_REMOTE_CALL, '', Event::SUCCESS, $childId);
+
+            $root = $tree->getRootMessageId();
+            if (is_null($root)) {
+                $root = $messageId;
+            }
+
+            $ctx->addProperty($ctx::ROOT, $root);
+            $ctx->addProperty($ctx::PARENT, $messageId);
+            $ctx->addProperty($ctx::CHILD, $childId);
+        }
+    }
+
+    public static function logRemoteCallServer(CatAgentContext $ctx)
+    {
+        if (self::isEnabled()) {
+            $tree = CatAgent::getManager()->getMessageTree();
+            $childId = $ctx->getProperty(CatAgentContext::CHILD);
+            $rootId = $ctx->getProperty(CatAgentContext::ROOT);
+            $parentId = $ctx->getProperty(CatAgentContext::PARENT);
+
+            if ($parentId === '') {
+                $tree->setParentMessageId($parentId);
+            }
+            if ($rootId === '') {
+                $tree->setRootMessageId($rootId);
+            }
+            if ($childId === '') {
+                $tree->setMessageId($childId);
+            }
         }
     }
 
