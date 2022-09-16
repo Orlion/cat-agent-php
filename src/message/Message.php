@@ -6,7 +6,7 @@ interface Message
 {
     const SUCCESS = '0';
 
-    public function addData(string $key, string $value): void;
+    public function addData(string $keyValuePairs): void;
 
     public function complete(): void;
 
@@ -16,7 +16,7 @@ interface Message
 
     public function getStatus(): string;
 
-    public function getTimestamp(): float;
+    public function getTimestamp(): int;
 
     public function getType(): string;
 
@@ -28,5 +28,5 @@ interface Message
 
     public function setSuccessStatus(): void;
 
-    public function setTimestamp(float $timestamp): void;
+    public function setTimestamp(int $timestamp): void;
 }

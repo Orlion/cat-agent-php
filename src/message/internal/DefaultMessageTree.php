@@ -49,22 +49,22 @@ class DefaultMessageTree implements MessageTree
         return $this->domain;
     }
 
-    public function getMessage(): Message
+    public function getMessage(): ?Message
     {
         return $this->message;
     }
 
-    public function getMessageId(): string
+    public function getMessageId(): ?string
     {
         return $this->messageId;
     }
 
-    public function getParentMessageId(): string
+    public function getParentMessageId(): ?string
     {
         return $this->parentMessageId;
     }
 
-    public function getRootMessageId(): string
+    public function getRootMessageId(): ?string
     {
         return $this->rootMessageId;
     }
@@ -109,17 +109,17 @@ class DefaultMessageTree implements MessageTree
         $this->message = $message;
     }
 
-    public function setMessageId(string $messageId): void
+    public function setMessageId(?string $messageId): void
     {
         $this->messageId = $messageId;
     }
 
-    public function setParentMessageId(string $parentMessageId): void
+    public function setParentMessageId(?string $parentMessageId): void
     {
         $this->parentMessageId = $parentMessageId;
     }
 
-    public function setRootMessageId(string $rootMessageId): void
+    public function setRootMessageId(?string $rootMessageId): void
     {
         $this->rootMessageId = $rootMessageId;
     }

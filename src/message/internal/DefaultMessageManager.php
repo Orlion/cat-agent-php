@@ -17,7 +17,7 @@ class DefaultMessageManager implements MessageManager
     private $length;
     private $sender;
 
-    private function __construct(string $domain, string $server)
+    public function __construct(string $domain, string $server)
     {
         $this->tree = new DefaultMessageTree($domain);
         $this->stack = new \SplStack();
@@ -80,7 +80,7 @@ class DefaultMessageManager implements MessageManager
 
     private function addTransactionChild(Message $message, Transaction $transaction): void
     {
-        $transaction->addChild($transaction);
+        $transaction->addChild($message);
         $this->length++;
     }
 

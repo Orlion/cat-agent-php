@@ -10,15 +10,15 @@ interface MessageTree
 
     public function getEvents(): array;
 
-    public function getMessage(): Message;
+    public function getMessage(): ?Message;
 
-    public function getMessageId(): string;
+    public function getMessageId(): ?string;
 
     public function getMetrics(): array;
 
-    public function getParentMessageId(): string;
+    public function getParentMessageId(): ?string;
 
-    public function getRootMessageId(): string;
+    public function getRootMessageId(): ?string;
 
     public function getThreadGroupName(): string;
 
@@ -32,11 +32,11 @@ interface MessageTree
 
     public function setMessage(?Message $message): void;
 
-    public function setMessageId(string $messageId): void;
+    public function setMessageId(?string $messageId): void;
 
-    public function setParentMessageId(string $parentMessageId): void;
+    public function setParentMessageId(?string $parentMessageId): void;
 
-    public function setRootMessageId(string $rootMessageId): void;
+    public function setRootMessageId(?string $rootMessageId): void;
 
     public function setThreadGroupName(string $name): void;
 

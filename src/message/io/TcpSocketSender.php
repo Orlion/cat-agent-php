@@ -2,7 +2,7 @@
 
 namespace Orlion\CatAgentPhp\Message\Io;
 
-use Orlion\CatAgentPhp\Message\Codec\NativeMessageCodec;
+use Orlion\CatAgentPhp\Message\Codec\PlainTextMessageCodec;
 use Orlion\CatAgentPhp\Message\MessageTree;
 use RuntimeException;
 
@@ -14,7 +14,7 @@ class TcpSocketSender implements MessageSender
     private $domain;
     private $address;
     private $port;
-    private $nativeCodec;
+    private $codec;
 
     public function __construct(string $server)
     {
@@ -40,13 +40,15 @@ class TcpSocketSender implements MessageSender
             }
         }
 
-        $this->nativeCodec = new NativeMessageCodec();
+        $this->codec = new PlainTextMessageCodec();
     }
 
     public function send(MessageTree $tree): void
     {
+        $data = $this->codec->encode($tree);
+        var_dump($data);
         if ($this->conn()) {
-            $data = $this->nativeCodec->encode($tree);
+            $data = $this->codec->encode($tree);
             socket_write($this->socket, $data, strlen($data));
         } else {
             // todo: log?
@@ -79,7 +81,7 @@ class TcpSocketSender implements MessageSender
 
     protected function close(): void
     {
-        if ($this->conn()) {
+        if (!is_null($this->socket)) {
             socket_close($this->socket);
             $this->socket = null;
         }

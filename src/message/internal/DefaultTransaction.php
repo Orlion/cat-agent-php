@@ -22,7 +22,7 @@ class DefaultTransaction extends AbstractMessage implements Transaction
         $this->durationStart = Time::currentTimeMicro();
     }
 
-    public function addChild(Message $message): DefaultTransaction
+    public function addChild(Message $message): Transaction
     {
         $this->children[] = $message;
         return $this;
@@ -32,7 +32,7 @@ class DefaultTransaction extends AbstractMessage implements Transaction
     {
         if (!$this->isCompleted()) {
             if ($this->durationInMicro == -1) {
-                $this->durationInMicro = (Time::currentTimeMicro() - $this->durationStart) / 1000;
+                $this->durationInMicro = Time::currentTimeMicro() - $this->durationStart;
             }
             $this->setComplete(true);
 

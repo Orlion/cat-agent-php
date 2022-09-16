@@ -1,9 +1,12 @@
 <?php
 
-namespace Orlion\CatAgentPhp;
+namespace Orlion\CatAgentPhp\Tests;
 
+use Orlion\CatAgentPhp\CatAgent;
 use Orlion\CatAgentPhp\Message\Event;
 use Orlion\CatAgentPhp\Message\Transaction;
+
+require_once __DIR__ . '/../vendor/autoload.php';
 
 class CatTest
 {
@@ -14,11 +17,11 @@ class CatTest
 
     public function run()
     {
+        CatAgent::init('php-client-test', '127.0.0.1');
+
         $transaction = CatAgent::newTransaction('URL', 'http://www.test.com');
 
         CatAgent::logEvent('URL.Server', 'serverIp', Event::SUCCESS, "ip=serverIp");
-        CatAgent::logMetricForCount("metric.key");
-        CatAgent::logMetricForDuration("metric.key", 5);
 
         $transaction->setStatus(Transaction::SUCCESS);
         $transaction->complete();

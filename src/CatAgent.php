@@ -11,7 +11,6 @@ use Orlion\CatAgentPhp\Message\Internal\DefaultMessageManager;
 use Orlion\CatAgentPhp\Message\MessageManager;
 use Orlion\CatAgentPhp\Util\Time;
 use RuntimeException;
-use Throwable;
 
 class CatAgent
 {
@@ -37,7 +36,7 @@ class CatAgent
     private static function checkInitialize(): void
     {
         if (!self::$init) {
-            throw new RuntimeException('Cat has not been initialized, Please execute CatAgent::init() first');
+            throw new RuntimeException('Cat has not been initialized, please execute CatAgent::init() first.');
         }
     }
 
@@ -68,20 +67,6 @@ class CatAgent
     public static function isEnabled(): bool
     {
         return self::$enabled;
-    }
-
-    public static function logError(Throwable $cause, string $message = ''): void
-    {
-        if (self::isEnabled()) {
-            CatAgent::getProducer()->logError($cause, $message);
-        }
-    }
-
-    public static function logErrorWithCategory(string $category, Throwable $cause, string $message = ''): void
-    {
-        if (self::isEnabled()) {
-            CatAgent::getProducer()->logErrorWithCategory($category, $cause, $message);
-        }
     }
 
     public static function logEvent(string $type, string $name, string $status = '', string $nameValuePairs = ''): void

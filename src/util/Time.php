@@ -4,15 +4,15 @@ namespace Orlion\CatAgentPhp\Util;
 
 class Time
 {
-    public static function currentTimeMillis(): float
+    public static function currentTimeMillis(): int
     {
-        list($t1, $t2) = explode(' ', microtime());
-        return (float)sprintf('%.0f', (floatval($t1) + floatval($t2)) * 1000);
+        $mt = explode(' ', microtime());
+        return ((int)$mt[1]) * 1000 + ((int)round($mt[0] * 1000));
     }
 
-    public static function currentTimeMicro(): float
+    public static function currentTimeMicro(): int
     {
-        list($t1, $t2) = explode(' ', microtime());
-        return (floatval($t1) + floatval($t2));
+        $mt = explode(' ', microtime());
+        return ((int)$mt[1]) * 1000000 + ((int)($mt[0] * 1000000));
     }
 }

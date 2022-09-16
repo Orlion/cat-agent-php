@@ -3,11 +3,13 @@
 namespace Orlion\CatAgentPhp\Message\Codec;
 
 use DateTime;
+use Exception;
 use Orlion\CatAgentPhp\Message\Event;
 use Orlion\CatAgentPhp\Message\Message;
 use Orlion\CatAgentPhp\Message\MessageTree;
 use Orlion\CatAgentPhp\Message\Metric;
 use Orlion\CatAgentPhp\Message\Transaction;
+use RuntimeException;
 
 class PlainTextMessageCodec implements MessageCodec
 {
@@ -24,11 +26,15 @@ class PlainTextMessageCodec implements MessageCodec
 
     public function encode(MessageTree $tree): string
     {
-        $header = $this->encodeHeader($tree);
+        $buf = $this->encodeHeader($tree);
         
         if (!is_null($tree->getMessage())) {
-
+            $buf .= $this->encodeMessage($tree->getMessage());
         }
+
+        $len = strlen($buf);
+        
+        return pack('N', $len) . pack("a{$len}", $buf);
     }
 
     protected function encodeHeader(MessageTree $tree): string
@@ -43,23 +49,35 @@ class PlainTextMessageCodec implements MessageCodec
 
     public function encodeMessage(Message $message)
     {
-        switch (true) {
-            case $message instanceof Transaction:
-                break;
-            case $message instanceof Event:
-                break;
-            case $message instanceof Metric:
-                break;
+        if ($message instanceof Transaction) {
+            $buf = $this->encodeTransaction($message);
+        } else if ($message instanceof Event) {
+            $buf = $this->encodeLine($message, 'E', self::POLICY_DEFAULT);
+        } else if ($message instanceof Metric) {
+            $buf = $this->encodeLine($message, 'M', self::POLICY_DEFAULT);
+        } else {
+            throw new RuntimeException("Unsupported message type.");
         }
+        return $buf;
     }
 
     protected function encodeTransaction(Transaction $transaction)
     {
         $children = $transaction->getChildren();
         if (empty($children)) {
-
+            return $this->encodeLine($transaction, 'A', self::POLICY_WITH_DURATION);
         } else {
-            
+            $buf = $this->encodeLine($transaction, 't', self::POLICY_WITHOUT_STATUS);
+
+            foreach ($children as $child) {
+                if (!is_null($child)) {
+                    $buf .= $this->encodeMessage($child);
+                }
+            }
+
+            $buf .= $this->encodeLine($transaction, 'T', self::POLICY_WITH_DURATION);
+
+            return $buf;
         }
     }
 
@@ -99,7 +117,6 @@ class PlainTextMessageCodec implements MessageCodec
 
     private function formatTime(int $timestamp)
     {
-        $datetime = new DateTime($timestamp);
-        return $datetime->format('Y-m-d H:i:s.u');
+        return date('Y-m-d H:i:s.', (int) $timestamp / 1000) . substr($timestamp, -3);
     }
 }
