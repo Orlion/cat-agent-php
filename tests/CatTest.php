@@ -21,7 +21,22 @@ class CatTest
 
         $transaction = CatAgent::newTransaction('URL', 'http://www.test.com');
 
-        CatAgent::logEvent('URL.Server', 'serverIp', Event::SUCCESS, "ip=serverIp");
+        CatAgent::logEvent('URL.Server', 'serverIp', Event::SUCCESS, ['ip' => 'serverIp']);
+
+        $transaction->setStatus(Transaction::SUCCESS);
+        $transaction->complete();
+
+        $transaction = CatAgent::newTransaction('URL', 'http://www.test.com');
+
+        $transaction1 = CatAgent::newTransaction('SQL', 'SELECT * FROM TEST');
+
+        $event = CatAgent::newEvent('EventType', 'EventName');
+
+        $event->addData(['k1' => 'v1']);
+        $event->complete();
+
+        $transaction1->setStatus(Transaction::SUCCESS);
+        $transaction1->complete();
 
         $transaction->setStatus(Transaction::SUCCESS);
         $transaction->complete();

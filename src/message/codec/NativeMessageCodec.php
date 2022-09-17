@@ -10,6 +10,7 @@ class NativeMessageCodec implements MessageCodec
 
     public function encode(MessageTree $tree): string
     {
+        // todo
         return '';
     }
 }

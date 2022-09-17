@@ -6,11 +6,11 @@ interface Message
 {
     const SUCCESS = '0';
 
-    public function addData(string $keyValuePairs): void;
+    public function addData(array $keyValuePairs): void;
 
     public function complete(): void;
 
-    public function getData();
+    public function getData(): ?array;
 
     public function getName(): string;
 

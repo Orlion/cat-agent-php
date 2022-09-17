@@ -69,10 +69,10 @@ class CatAgent
         return self::$enabled;
     }
 
-    public static function logEvent(string $type, string $name, string $status = '', string $nameValuePairs = ''): void
+    public static function logEvent(string $type, string $name, string $status = '', array $data = []): void
     {
         if (self::isEnabled()) {
-            CatAgent::getProducer()->logEvent($type, $name, $status, $nameValuePairs);
+            CatAgent::getProducer()->logEvent($type, $name, $status, $data);
         }
     }
 

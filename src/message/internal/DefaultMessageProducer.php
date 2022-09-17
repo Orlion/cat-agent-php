@@ -31,12 +31,12 @@ class DefaultMessageProducer implements MessageProducer
         return $this->factory->getNextId($domain);
     }
 
-    public function logEvent(string $type, string $name, string $status = Message::SUCCESS, ?string $nameValuePairs = null): void
+    public function logEvent(string $type, string $name, string $status = Message::SUCCESS, array $keyValuePairs = []): void
     {
         $event = $this->newEvent($type, $name);
 
-        if (!is_null($nameValuePairs) && $nameValuePairs !== '') {
-            $event->addData($nameValuePairs);
+        if (empty($keyValuePairs)) {
+            $event->addData($keyValuePairs);
         }
 
         $event->setStatus($status);

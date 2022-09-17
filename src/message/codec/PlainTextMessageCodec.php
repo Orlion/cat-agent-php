@@ -105,10 +105,10 @@ class PlainTextMessageCodec implements MessageCodec
                 $elements[] = $message->getRawDurationInMicros() . 'us';
             }
 
-            if (!is_scalar($data)) {
+            if (!is_null($data)) {
                 $elements[] = json_encode($data, JSON_UNESCAPED_UNICODE);
             } else {
-                $elements[] = $data;
+                $elements[] = '';
             }
         }
 

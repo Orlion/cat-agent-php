@@ -12,6 +12,7 @@ abstract class AbstractMessage implements Message
     private $status = self::SUCCESS;
     private $statusCode = 1;
     private $timestampInMillis = 0;
+    private $data;
     private $completed = false;
 
     public function __construct(string $type, string $name)
@@ -21,27 +22,23 @@ abstract class AbstractMessage implements Message
         $this->timestampInMillis = Time::currentTimeMillis();
     }
 
-    public function setData(string $str)
+    public function setData(array $data)
     {
-        $this->data = $str;
+        $this->data = $data;
     }
 
-    public function addData(string $keyValuePairs): void
+    public function addData(array $keyValuePairs): void
     {
         if (is_null($this->data)) {
             $this->data = $keyValuePairs;
         } else {
-            $this->data .= '&' . $keyValuePairs;
+            $this->data = array_merge($this->data, $keyValuePairs);
         }
     }
 
-    public function getData()
+    public function getData(): ?array
     {
-        if (is_null($this->data)) {
-            return '';
-        } else {
-            return $this->data;
-        }
+        return $this->data;
     }
 
     public function getName(): string
