@@ -45,8 +45,6 @@ class TcpSocketSender implements MessageSender
 
     public function send(MessageTree $tree): void
     {
-        $data = $this->codec->encode($tree);
-        var_dump($data);
         if ($this->conn()) {
             $data = $this->codec->encode($tree);
             socket_write($this->socket, $data, strlen($data));

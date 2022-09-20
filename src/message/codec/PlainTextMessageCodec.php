@@ -13,7 +13,6 @@ use RuntimeException;
 
 class PlainTextMessageCodec implements MessageCodec
 {
-    const VERSION = 'PT1';
     const TAB = "\t";
     const LF = "\n";
     const HOSTNAME_PLACEHOLDER = '{hostname}';
@@ -39,12 +38,17 @@ class PlainTextMessageCodec implements MessageCodec
 
     protected function encodeHeader(MessageTree $tree): string
     {
-        $messageId = $tree->getMessageId();
-        if ($messageId === '') {
-            $messageId = self::MESSAGE_ID_PLACEHOLDER;
-        }
+        $elements = [
+            $tree->getDomain(),
+            $tree->getThreadGroupName(), 
+            $tree->getThreadId(), 
+            $tree->getThreadName(),
+            $tree->getMessageId() ?? '',
+            $tree->getParentMessageId(), 
+            $tree->getRootMessageId(),
+        ];
 
-        return sprintf("%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n", self::VERSION, $tree->getDomain(), self::HOSTNAME_PLACEHOLDER, self::IP_PLACEHOLDER, $tree->getThreadGroupName(), $tree->getThreadId(), $tree->getThreadName(), $messageId, $tree->getParentMessageId(), $tree->getRootMessageId(), '');
+        return implode(self::TAB, $elements) . self::LF;
     }
 
     public function encodeMessage(Message $message)
