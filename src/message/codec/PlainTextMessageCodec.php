@@ -15,13 +15,6 @@ class PlainTextMessageCodec implements MessageCodec
 {
     const TAB = "\t";
     const LF = "\n";
-    const HOSTNAME_PLACEHOLDER = '{hostname}';
-    const IP_PLACEHOLDER = '{ip}';
-    const MESSAGE_ID_PLACEHOLDER = '{messageId}';
-
-    const POLICY_DEFAULT = 0;
-    const POLICY_WITHOUT_STATUS = 1;
-    const POLICY_WITH_DURATION = 2;
 
     public function encode(MessageTree $tree): string
     {
@@ -56,9 +49,7 @@ class PlainTextMessageCodec implements MessageCodec
         if ($message instanceof Transaction) {
             $buf = $this->encodeTransaction($message);
         } else if ($message instanceof Event) {
-            $buf = $this->encodeLine($message, 'E', self::POLICY_DEFAULT);
-        } else if ($message instanceof Metric) {
-            $buf = $this->encodeLine($message, 'M', self::POLICY_DEFAULT);
+            $buf = $this->encodeLine($message, 'E');
         } else {
             throw new RuntimeException("Unsupported message type.");
         }
@@ -69,9 +60,9 @@ class PlainTextMessageCodec implements MessageCodec
     {
         $children = $transaction->getChildren();
         if (empty($children)) {
-            return $this->encodeLine($transaction, 'A', self::POLICY_WITH_DURATION);
+            return $this->encodeLine($transaction, 'A');
         } else {
-            $buf = $this->encodeLine($transaction, 't', self::POLICY_WITHOUT_STATUS);
+            $buf = $this->encodeLine($transaction, 't');
 
             foreach ($children as $child) {
                 if (!is_null($child)) {
@@ -79,44 +70,43 @@ class PlainTextMessageCodec implements MessageCodec
                 }
             }
 
-            $buf .= $this->encodeLine($transaction, 'T', self::POLICY_WITH_DURATION);
+            $buf .= $this->encodeLine($transaction, 'T');
 
             return $buf;
         }
     }
 
-    private function encodeLine(Message $message, string $type, int $policy)
+    private function encodeLine(Message $message, string $type)
     {
         $elements = [$type];
 
         if ($type === 'T' && $message instanceof Transaction) {
             $duration = $message->getDurationInMillis();
-
-            $elements[] = $this->formatTime($message->getTimestamp() + $duration);
+            $elements[] = $message->getTimestamp() + $duration;
         } else {
-            $elements[] =  $this->formatTime($message->getTimestamp());
+            $elements[] =  $message->getTimestamp();
         }
 
         $elements[] = $message->getType();
         $elements[] = $message->getName();
 
-        if($policy != self::POLICY_WITHOUT_STATUS) {
-            $elements[] = $message->getStatus();
+        $elements[] = $message->getStatus();
 
-            $data = $message->getData();
+        $data = $message->getData();
 
-            if ($policy == self::POLICY_WITH_DURATION && $message instanceof Transaction) {
-                $elements[] = $message->getRawDurationInMicros() . 'us';
-            }
-
-            if (!is_null($data)) {
-                $elements[] = json_encode($data, JSON_UNESCAPED_UNICODE);
-            } else {
-                $elements[] = '';
-            }
+        if ($message instanceof Transaction) {
+            $elements[] = $message->getRawDurationInMicros();
+        } else {
+            $elements[] = '';
         }
 
-        return implode(self::TAB, $elements) . self::TAB . self::LF;
+        if (!is_null($data)) {
+            $elements[] = json_encode($data, JSON_UNESCAPED_UNICODE);
+        } else {
+            $elements[] = '';
+        }
+
+        return implode(self::TAB, $elements) . self::LF;
     }
 
     private function formatTime(int $timestamp)
