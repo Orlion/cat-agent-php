@@ -8,6 +8,7 @@ use Orlion\CatAgentPhp\Message\MessageProducer;
 use Orlion\CatAgentPhp\Message\Transaction;
 use Orlion\CatAgentPhp\Message\Internal\DefaultMessageProducer;
 use Orlion\CatAgentPhp\Message\Internal\DefaultMessageManager;
+use Orlion\CatAgentPhp\Message\Io\CatAgentServer;
 use Orlion\CatAgentPhp\Message\MessageManager;
 use Orlion\CatAgentPhp\Util\Time;
 use RuntimeException;
@@ -19,12 +20,13 @@ class CatAgent
     private static $enabled = true;
     private static $init = false;
 
-    public static function init(string $domain, string $server): void
+    public static function init(string $domain, string $serverAddr): void
     {
         if (!self::$init) {
             try {
+                $server = new CatAgentServer($domain, $serverAddr);
                 self::$manager = new DefaultMessageManager($domain, $server);
-                self::$producer = new DefaultMessageProducer(self::$manager);
+                self::$producer = new DefaultMessageProducer(self::$manager, $server);
                 
                 self::$init = true;
             } catch (Exception $e) {
@@ -105,7 +107,7 @@ class CatAgent
         }
     }
 
-    public static function logRemoteCallClient(CatAgentContext $ctx, string $domain)
+    public static function logRemoteCallClient(CatAgentContext $ctx, string $domain = 'default')
     {
         if (self::isEnabled()) {
             $tree = CatAgent::getManager()->getMessageTree();
@@ -117,7 +119,7 @@ class CatAgent
             }
 
             $childId = CatAgent::getProducer()->createRpcMessageId($domain);
-            CatAgent::logEvent(CatAgentConstants::TYPE_REMOTE_CALL, '', Event::SUCCESS, $childId);
+            CatAgent::logEvent(CatAgentConstants::TYPE_REMOTE_CALL, '', Event::SUCCESS, ['childId' => $childId]);
 
             $root = $tree->getRootMessageId();
             if (is_null($root)) {

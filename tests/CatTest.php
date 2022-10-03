@@ -12,14 +12,12 @@ class CatTest
 {
     public function __construct()
     {
-        
+        CatAgent::init('www.cat-agent-sample.com', '127.0.0.1:2380');
     }
 
     public function run()
     {
-        CatAgent::init('php-client-test', '127.0.0.1');
-
-        $transaction = CatAgent::newTransaction('URL', 'http://www.test.com');
+        $transaction = CatAgent::newTransaction('URL', '/index/');
 
         CatAgent::logEvent('URL.Server', 'serverIp', Event::SUCCESS, ['ip' => 'serverIp']);
 
@@ -41,7 +39,13 @@ class CatTest
         $transaction->setStatus(Transaction::SUCCESS);
         $transaction->complete();
     }
+
+    public function createMessageId()
+    {
+        $messageId = CatAgent::getProducer()->createMessageId();
+        var_dump($messageId);
+    }
 }
 
 $catTest = new CatTest();
-$catTest->run();
+$catTest->createMessageId();
