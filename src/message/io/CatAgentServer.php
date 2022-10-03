@@ -12,8 +12,8 @@ use RuntimeException;
 class CatAgentServer implements MessageIdFactory, MessageSender
 {
     const DEFAULT_PORT = 2280;
-    const CMD_GET_NEXT_ID = 0;
-    const CMD_SEND_MESSAGE = 1;
+    const CMD_GET_NEXT_ID = 1;
+    const CMD_SEND_MESSAGE = 2;
 
     private $domain;
     private $domainLen;
@@ -59,9 +59,27 @@ class CatAgentServer implements MessageIdFactory, MessageSender
     public function send(MessageTree $tree): void
     {
         if ($this->conn()) {
-            $data = $this->codec->encode($tree);
-            echo ($data);
-            //socket_write($this->socket, $data, strlen($data));
+            $body = $this->codec->encode($tree);
+            $bodyLen = strlen($body);
+            $data = pack('N', self::CMD_SEND_MESSAGE) . pack('N', $bodyLen + 8) . pack("a{$bodyLen}", $body);
+            $length = strlen($data);
+            echo $data;
+            while (true) {
+                $sent = socket_write($this->socket, $data, $length);
+                var_dump(111111, $sent, $length);
+                if ($sent === false) {
+                    $this->hasConn = false;
+                    list($errno, $errmsg) = $this->getLastSocketErr();
+                    throw new Exception("send message to cat-agent server {$this->serverAddr} failed: [{$errno}] {$errmsg}");
+                }
+           
+                if ($sent < $length) {
+                    $data= substr($data, $sent);
+                    $length -= $sent;
+                } else {
+                    break;
+                }
+            }
         } else {
             // todo: log?
         }
@@ -70,13 +88,13 @@ class CatAgentServer implements MessageIdFactory, MessageSender
     public function getNextId(): string
     {
         if ($this->conn()) {
-            $data = pack('N', self::CMD_GET_NEXT_ID) . pack('N', $this->domainLen+8) .  pack("a{$this->domainLen}", $this->domain);
+            $data = pack('N', self::CMD_GET_NEXT_ID) . pack('N', 8);
             $length = strlen($data);
             while (true) {
                 $sent = socket_write($this->socket, $data, $length);
                 if ($sent === false) {
                     list($errno, $errmsg) = $this->getLastSocketErr();
-                    throw new Exception("get nextId write to cat-agent server {$this->serverAddr} failed: [{$errno}] {$errmsg}");
+                    throw new Exception("get nextId from cat-agent server {$this->serverAddr} failed: [{$errno}] {$errmsg}");
                 }
                 if ($sent < $length) {
                     $data = substr($data, $sent);
@@ -102,11 +120,7 @@ class CatAgentServer implements MessageIdFactory, MessageSender
             }
             $status = $statusArr[1];
             if ($status !== 0) {
-                if ($status === 3) {
-                    throw new RuntimeException("recv nextId domain: {$this->domain} is inconsistent with cat agent server's domain");
-                } else {
-                    throw new RuntimeException("recv nextId failed, status: [{$status}]");
-                }
+                throw new RuntimeException("recv nextId failed, status: [{$status}]");
             }
 
             $responseLenArr = unpack('N', substr($data, 4, 4));
@@ -119,13 +133,17 @@ class CatAgentServer implements MessageIdFactory, MessageSender
                 throw new RuntimeException("recv nextId failed, response length: {$responseLen} <= 8");
             }
 
-            $len = socket_recv($this->socket, $data, $responseLen, MSG_WAITALL);
+            $len = socket_recv($this->socket, $data, $responseLen - 8, MSG_WAITALL);
             if ($len === 0) {
                 $this->hasConn = false;
                 throw new RuntimeException('recv nextId read body failed: connection closed');
             } else if ($len === false) {
                 list($errno, $errmsg) = $this->getLastSocketErr();
                 throw new RuntimeException("recv nextId read body error: [{$errno}] {$errmsg}");
+            }
+
+            if (strlen($data, $this->domain) !== 0) {
+                throw new RuntimeException("recv nextId domain: {$this->domain} is inconsistent with cat agent server's domain");
             }
 
             return $data;

@@ -15,7 +15,7 @@ class CatTest
         CatAgent::init('www.cat-agent-sample.com', '127.0.0.1:2380');
     }
 
-    public function run()
+    public function send()
     {
         $transaction = CatAgent::newTransaction('URL', '/index/');
 
@@ -23,7 +23,7 @@ class CatTest
 
         $transaction->setStatus(Transaction::SUCCESS);
         $transaction->complete();
-
+        return;
         $transaction = CatAgent::newTransaction('URL', 'http://www.test.com');
 
         $transaction1 = CatAgent::newTransaction('SQL', 'SELECT * FROM TEST');
@@ -48,4 +48,4 @@ class CatTest
 }
 
 $catTest = new CatTest();
-$catTest->createMessageId();
+$catTest->send();

@@ -24,9 +24,7 @@ class PlainTextMessageCodec implements MessageCodec
             $buf .= $this->encodeMessage($tree->getMessage());
         }
 
-        $len = strlen($buf);
-        
-        return pack('N', $len) . pack("a{$len}", $buf);
+        return $buf;
     }
 
     protected function encodeHeader(MessageTree $tree): string
