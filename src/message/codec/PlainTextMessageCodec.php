@@ -20,9 +20,7 @@ class PlainTextMessageCodec implements MessageCodec
     {
         $buf = $this->encodeHeader($tree);
         
-        if (!is_null($tree->getMessage())) {
-            $buf .= $this->encodeMessage($tree->getMessage());
-        }
+        $buf .= $this->encodeMessage($tree->getMessage());
 
         return $buf;
     }
@@ -49,7 +47,7 @@ class PlainTextMessageCodec implements MessageCodec
         } else if ($message instanceof Event) {
             $buf = $this->encodeLine($message, 'E');
         } else {
-            throw new RuntimeException("Unsupported message type.");
+            throw new RuntimeException("Unsupported message type");
         }
         return $buf;
     }
@@ -76,7 +74,12 @@ class PlainTextMessageCodec implements MessageCodec
 
     private function encodeLine(Message $message, string $type)
     {
-        $elements = [$type];
+        $elements = [
+            $type,
+            $message->getType(),
+            $message->getName(),
+            $message->getStatus(),
+        ];
 
         if ($type === 'T' && $message instanceof Transaction) {
             $duration = $message->getDurationInMillis();
@@ -85,19 +88,13 @@ class PlainTextMessageCodec implements MessageCodec
             $elements[] =  $message->getTimestamp();
         }
 
-        $elements[] = $message->getType();
-        $elements[] = $message->getName();
-
-        $elements[] = $message->getStatus();
-
-        $data = $message->getData();
-
         if ($message instanceof Transaction) {
             $elements[] = $message->getRawDurationInMicros();
         } else {
             $elements[] = '';
         }
 
+        $data = $message->getData();
         if (!is_null($data)) {
             $elements[] = json_encode($data, JSON_UNESCAPED_UNICODE);
         } else {
@@ -105,10 +102,5 @@ class PlainTextMessageCodec implements MessageCodec
         }
 
         return implode(self::TAB, $elements) . self::LF;
-    }
-
-    private function formatTime(int $timestamp)
-    {
-        return date('Y-m-d H:i:s.', (int) $timestamp / 1000) . substr($timestamp, -3);
     }
 }
