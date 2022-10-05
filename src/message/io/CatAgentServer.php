@@ -4,12 +4,10 @@ namespace Orlion\CatAgentPhp\Message\Io;
 
 use Exception;
 use Orlion\CatAgentPhp\Message\Codec\PlainTextMessageCodec;
-use Orlion\CatAgentPhp\Message\MessageIdFactory;
-use Orlion\CatAgentPhp\Message\MessageSender;
 use Orlion\CatAgentPhp\Message\MessageTree;
 use RuntimeException;
 
-class CatAgentServer implements MessageIdFactory, MessageSender
+class CatAgentServer
 {
     const DEFAULT_PORT = 2280;
     const CMD_GET_NEXT_ID = 1;
@@ -58,9 +56,7 @@ class CatAgentServer implements MessageIdFactory, MessageSender
 
     public function send(MessageTree $tree): void
     {
-        var_dump('a');
         if ($this->conn()) {
-            var_dump('b');
             $body = $this->codec->encode($tree);
             $bodyLen = strlen($body);
             $data = pack('N', self::CMD_SEND_MESSAGE) . pack('N', $bodyLen + 8) . pack("a{$bodyLen}", $body);
@@ -68,7 +64,6 @@ class CatAgentServer implements MessageIdFactory, MessageSender
             echo $data;
             while (true) {
                 $sent = socket_write($this->socket, $data, $length);
-                var_dump(111111, $sent, $length);
                 if ($sent === false) {
                     $this->hasConn = false;
                     list($errno, $errmsg) = $this->getLastSocketErr();
@@ -83,7 +78,6 @@ class CatAgentServer implements MessageIdFactory, MessageSender
                 }
             }
         } else {
-            var_dump('c');
         }
     }
 

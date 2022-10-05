@@ -3,6 +3,7 @@
 namespace Orlion\CatAgentPhp\Tests;
 
 use Orlion\CatAgentPhp\CatAgent;
+use Orlion\CatAgentPhp\CatAgentContext;
 use Orlion\CatAgentPhp\Message\Event;
 use Orlion\CatAgentPhp\Message\Transaction;
 
@@ -39,12 +40,31 @@ class CatTest
 
         $transaction->setStatus(Transaction::SUCCESS);
         $transaction->complete();
+
+        $ctx = new CatAgentContextImpl();
+        CatAgent::logRemoteCallClient($ctx, 'api.callee.com');
+        var_dump($ctx);
     }
 
     public function createMessageId()
     {
         $messageId = CatAgent::getProducer()->createMessageId();
         var_dump($messageId);
+    }
+}
+
+class CatAgentContextImpl implements CatAgentContext
+{
+    private $map = [];
+
+    public function addProperty(string $key, string $value): void
+    {
+        $this->map[$key] = $value;
+    }
+
+    public function getProperty(string $key): string
+    {
+        return $this->map[$key] ?? '';
     }
 }
 

@@ -5,7 +5,6 @@ namespace Orlion\CatAgentPhp\Message\Internal;
 use Orlion\CatAgentPhp\Message\Event;
 use Orlion\CatAgentPhp\Message\Io\CatAgentServer;
 use Orlion\CatAgentPhp\Message\Message;
-use Orlion\CatAgentPhp\Message\MessageIdFactory;
 use Orlion\CatAgentPhp\Message\MessageManager;
 use Orlion\CatAgentPhp\Message\MessageProducer;
 use Orlion\CatAgentPhp\Message\Transaction;
@@ -13,22 +12,22 @@ use Orlion\CatAgentPhp\Message\Transaction;
 class DefaultMessageProducer implements MessageProducer
 {
     private $manager;
-    private $messageIdFactory;
+    private $server;
 
-    public function __construct(MessageManager $manager, MessageIdFactory $messageIdFactory)
+    public function __construct(MessageManager $manager, CatAgentServer $server)
     {
         $this->manager = $manager;
-        $this->messageIdFactory = $messageIdFactory;
+        $this->server = $server;
     }
 
     public function createMessageId(): string
     {
-        return $this->messageIdFactory->getNextId();
+        return $this->server->getNextId();
     }
 
     public function createRpcMessageId(string $domain): string
     {
-        return $this->messageIdFactory->getNextId($domain);
+        return $this->server->getNextId($domain);
     }
 
     public function logEvent(string $type, string $name, string $status = Message::SUCCESS, array $keyValuePairs = []): void
