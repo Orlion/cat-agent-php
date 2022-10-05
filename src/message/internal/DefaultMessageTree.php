@@ -18,15 +18,12 @@ class DefaultMessageTree implements MessageTree
 
     private $transactions;
     private $events;
-    private $metrics;
 
     public function clearMessageList()
     {
         $this->transactions = [];
 
         $this->events = [];
-
-        $this->metrics = [];
     }
 
     public function copy(): MessageTree
@@ -87,11 +84,6 @@ class DefaultMessageTree implements MessageTree
     public function getEvents(): array
     {
         return $this->events;
-    }
-
-    public function getMetrics(): array
-    {
-        return $this->metrics;
     }
 
     public function getTransactions(): array

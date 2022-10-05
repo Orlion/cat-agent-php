@@ -58,7 +58,9 @@ class CatAgentServer implements MessageIdFactory, MessageSender
 
     public function send(MessageTree $tree): void
     {
+        var_dump('a');
         if ($this->conn()) {
+            var_dump('b');
             $body = $this->codec->encode($tree);
             $bodyLen = strlen($body);
             $data = pack('N', self::CMD_SEND_MESSAGE) . pack('N', $bodyLen + 8) . pack("a{$bodyLen}", $body);
@@ -81,7 +83,7 @@ class CatAgentServer implements MessageIdFactory, MessageSender
                 }
             }
         } else {
-            // todo: log?
+            var_dump('c');
         }
     }
 

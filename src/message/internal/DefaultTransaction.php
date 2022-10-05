@@ -69,7 +69,7 @@ class DefaultTransaction extends AbstractMessage implements Transaction
 
     public function getDurationInMillis(): int
     {
-        return $this->getRawDurationInMicros() / 1000;
+        return $this->getDurationInMicros() / 1000;
     }
 
     public function getRawDurationInMicros(): int

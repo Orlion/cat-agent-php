@@ -2,12 +2,9 @@
 
 namespace Orlion\CatAgentPhp\Message\Codec;
 
-use DateTime;
-use Exception;
 use Orlion\CatAgentPhp\Message\Event;
 use Orlion\CatAgentPhp\Message\Message;
 use Orlion\CatAgentPhp\Message\MessageTree;
-use Orlion\CatAgentPhp\Message\Metric;
 use Orlion\CatAgentPhp\Message\Transaction;
 use RuntimeException;
 
@@ -89,7 +86,7 @@ class PlainTextMessageCodec implements MessageCodec
         }
 
         if ($message instanceof Transaction) {
-            $elements[] = $message->getRawDurationInMicros();
+            $elements[] = $message->getDurationInMicros();
         } else {
             $elements[] = '';
         }

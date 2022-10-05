@@ -14,8 +14,6 @@ interface MessageTree
 
     public function getMessageId(): ?string;
 
-    public function getMetrics(): array;
-
     public function getParentMessageId(): ?string;
 
     public function getRootMessageId(): ?string;
