@@ -2,16 +2,15 @@
 
 namespace Orlion\CatAgentPhp;
 
-use Exception;
+use Orlion\CatAgentPhp\Exception\CatAgentException;
 use Orlion\CatAgentPhp\Message\Event;
 use Orlion\CatAgentPhp\Message\MessageProducer;
 use Orlion\CatAgentPhp\Message\Transaction;
 use Orlion\CatAgentPhp\Message\Internal\DefaultMessageProducer;
 use Orlion\CatAgentPhp\Message\Internal\DefaultMessageManager;
-use Orlion\CatAgentPhp\Message\Io\CatAgentServer;
+use Orlion\CatAgentPhp\Message\Io\CatAgentClient;
 use Orlion\CatAgentPhp\Message\MessageManager;
 use Orlion\CatAgentPhp\Util\Time;
-use RuntimeException;
 
 class CatAgent
 {
@@ -23,22 +22,18 @@ class CatAgent
     public static function init(string $domain, string $serverAddr): void
     {
         if (!self::$init) {
-            try {
-                $server = new CatAgentServer($domain, $serverAddr);
-                self::$manager = new DefaultMessageManager($domain, $server);
-                self::$producer = new DefaultMessageProducer(self::$manager, $server);
-                
-                self::$init = true;
-            } catch (Exception $e) {
-                self::disable();
-            }
+            $client = new CatAgentClient($serverAddr);
+            self::$manager = new DefaultMessageManager($domain, $client);
+            self::$producer = new DefaultMessageProducer(self::$manager, $client, $domain);
+            
+            self::$init = true;
         }
     }
     
     private static function checkInitialize(): void
     {
         if (!self::$init) {
-            throw new RuntimeException('Cat has not been initialized, please execute CatAgent::init() first.');
+            throw new CatAgentException('cat has not been initialized');
         }
     }
 

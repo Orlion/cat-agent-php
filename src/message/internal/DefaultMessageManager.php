@@ -2,7 +2,7 @@
 
 namespace Orlion\CatAgentPhp\Message\Internal;
 
-use Orlion\CatAgentPhp\Message\Io\CatAgentServer;
+use Orlion\CatAgentPhp\Message\Io\CatAgentClient;
 use Orlion\CatAgentPhp\Message\Message;
 use Orlion\CatAgentPhp\Message\MessageManager;
 use Orlion\CatAgentPhp\Message\MessageTree;
@@ -15,9 +15,9 @@ class DefaultMessageManager implements MessageManager
     private $tree;
     private $stack;
     private $length;
-    private $server;
+    private $client;
 
-    public function __construct(string $domain, CatAgentServer $server)
+    public function __construct(string $domain, CatAgentClient $client)
     {
         $this->tree = new DefaultMessageTree($domain);
         $this->stack = new \SplStack();
@@ -29,7 +29,7 @@ class DefaultMessageManager implements MessageManager
         $this->tree->setThreadName('PHP-' . $pid);
         $this->length = 1;
 
-        $this->server = $server;
+        $this->client = $client;
     }
 
     public function start(Transaction $transaction): void
@@ -86,7 +86,7 @@ class DefaultMessageManager implements MessageManager
 
     public function flush(): void
     {
-        $this->server->send($this->tree);
+        $this->client->send($this->tree);
     }
 
     public function getMessageTree(): MessageTree

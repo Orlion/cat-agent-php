@@ -50,6 +50,16 @@ class CatTest
     {
         $messageId = CatAgent::getProducer()->createMessageId();
         var_dump($messageId);
+        $messageId = CatAgent::getProducer()->createMessageId();
+        var_dump($messageId);
+        $messageId = CatAgent::getProducer()->createMessageId();
+        var_dump($messageId);
+        $messageId = CatAgent::getProducer()->createMessageId();
+        var_dump($messageId);
+        $messageId = CatAgent::getProducer()->createMessageId();
+        var_dump($messageId);
+        $messageId = CatAgent::getProducer()->createMessageId();
+        var_dump($messageId);
     }
 }
 

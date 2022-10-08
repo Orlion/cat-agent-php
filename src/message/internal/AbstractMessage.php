@@ -22,23 +22,9 @@ abstract class AbstractMessage implements Message
         $this->timestampInMillis = Time::currentTimeMillis();
     }
 
-    public function setData(array $data)
+    public function getType(): string
     {
-        $this->data = $data;
-    }
-
-    public function addData(array $keyValuePairs): void
-    {
-        if (is_null($this->data)) {
-            $this->data = $keyValuePairs;
-        } else {
-            $this->data = array_merge($this->data, $keyValuePairs);
-        }
-    }
-
-    public function getData(): ?array
-    {
-        return $this->data;
+        return $this->type;
     }
 
     public function getName(): string
@@ -51,14 +37,19 @@ abstract class AbstractMessage implements Message
         return $this->status;
     }
 
+    public function isSuccess(): bool
+    {
+        return $this->statusCode > 0;
+    }
+
     public function getTimestamp(): int
     {
         return $this->timestampInMillis;
     }
 
-    public function getType(): string
+    public function getData(): ?array
     {
-        return $this->type;
+        return $this->data;
     }
 
     public function isCompleted(): bool
@@ -66,14 +57,9 @@ abstract class AbstractMessage implements Message
         return $this->completed;
     }
 
-    public function isSuccess(): bool
+    public function setType(string $type): void
     {
-        return $this->statusCode > 0;
-    }
-
-    public function setComplete(bool $completed): void
-    {
-        $this->completed = $completed;
+        $this->type = $type;
     }
 
     public function setName(string $name): void
@@ -103,8 +89,22 @@ abstract class AbstractMessage implements Message
         $this->timestampInMillis = $timestamp;
     }
 
-    public function setType(string $type): void
+    public function setData(array $data): void
     {
-        $this->type = $type;
+        $this->data = $data;
+    }
+
+    public function addData(array $data): void
+    {
+        if (is_null($this->data)) {
+            $this->data = $data;
+        } else {
+            $this->data = array_merge($this->data, $data);
+        }
+    }
+
+    public function setComplete(bool $completed): void
+    {
+        $this->completed = $completed;
     }
 }
