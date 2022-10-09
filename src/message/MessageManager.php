@@ -9,5 +9,5 @@ interface MessageManager {
 
     public function start(Transaction $transaction): void;
 
-    public function getMessageTree(): MessageTree;
+    public function getMessageTree(): ?MessageTree;
 }

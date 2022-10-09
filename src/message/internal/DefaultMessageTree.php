@@ -16,31 +16,6 @@ class DefaultMessageTree implements MessageTree
     private $threadId;
     private $threadName;
 
-    private $transactions;
-    private $events;
-
-    public function clearMessageList()
-    {
-        $this->transactions = [];
-
-        $this->events = [];
-    }
-
-    public function copy(): MessageTree
-    {
-        $tree = new DefaultMessageTree();
-
-        $tree->setDomain($this->domain);
-        $tree->setMessageId($this->messageId);
-        $tree->setParentMessageId($this->parentMessageId);
-        $tree->setRootMessageId($this->rootMessageId);
-        $tree->setThreadGroupName($this->threadGroupName);
-        $tree->setThreadId($this->threadId);
-        $tree->setThreadName($this->threadName);
-        $tree->setMessage($this->message);
-        return $tree;
-    }
-
     public function getDomain(): string
     {
         return $this->domain;
@@ -79,16 +54,6 @@ class DefaultMessageTree implements MessageTree
     public function getThreadName(): string
     {
         return $this->threadName;
-    }
-
-    public function getEvents(): array
-    {
-        return $this->events;
-    }
-
-    public function getTransactions(): array
-    {
-        return $this->transactions;
     }
 
     public function setDomain(string $domain): void

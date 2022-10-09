@@ -16,6 +16,7 @@ class CatAgentClient
     private $codec;
     private $socket;
     private $connected = false;
+    private $unread = false;
 
     public function __construct(string $serverAddr)
     {
@@ -49,22 +50,23 @@ class CatAgentClient
     {
         $this->connect();
         $request = $this->codec->encodeSendMessageRequest($tree);
-        echo $request;
         $this->writeRequest($request);
+        $this->unread = true;
     }
 
     public function createMessageId(string $domain): string
     {
         $this->connect();
+        $this->clearBuffer();
         $request = $this->codec->encodeCreateMessageIdRequest($domain);
         $this->writeRequest($request);
 
-        list($status, $length, $domain) = $this->readResponse();
+        list($status, $length, $messageId) = $this->readResponse();
         if ($status !== Codec::STATUS_OK) {
-
+            throw new CatAgentException(sprintf('%s response unsuccessful status: %d', $this->serverAddr, $status));
         }
 
-        return $domain;
+        return $messageId;
     }
 
     protected function connect()
@@ -96,6 +98,7 @@ class CatAgentClient
         }
 
         $this->connected = true;
+        $this->unread = false;
     }
 
     protected function writeRequest(string $request)
@@ -104,6 +107,7 @@ class CatAgentClient
         while (true) {
             $sent = socket_write($this->socket, $request, $length);
             if ($sent === false) {
+                $this->close();
                 list($errno, $errmsg) = $this->getLastSocketErr();
                 throw new CatAgentException(sprintf('write request to %s failed, errno: %d, errmsg: %s', $this->serverAddr, $errno, $errmsg));
             }
@@ -123,12 +127,13 @@ class CatAgentClient
             $this->close();
             throw new CatAgentException(sprintf('read response header from %s failed, connection closed', $this->serverAddr));
         } else if ($len === false) {
+            $this->close();
             list($errno, $errmsg) = $this->getLastSocketErr();
             throw new CatAgentException(sprintf('read response header from %s failed, errno: %d, errmsg: %s', $this->serverAddr, $errno, $errmsg));
         }
 
         list($status, $length) = $this->codec->decodeResponseHeader($header);
-        if ($status != Codec::STATUS_OK)
+        if ($status !== Codec::STATUS_OK)
         {
             throw new CatAgentException(sprintf('%s response unsuccessful status: %d', $this->serverAddr, $status));
         }
@@ -140,6 +145,7 @@ class CatAgentClient
                 $this->close();
                 throw new CatAgentException(sprintf('read response payload from %s failed, connection closed', $this->serverAddr));
             } else if ($len === false) {
+                $this->close();
                 list($errno, $errmsg) = $this->getLastSocketErr();
                 throw new CatAgentException(sprintf('read response payload from %s failed, errno: %d, errmsg: %s', $this->serverAddr, $errno, $errmsg));
             }
@@ -152,6 +158,13 @@ class CatAgentClient
     {
         $errno = socket_last_error($this->socket);
         return [$errno, socket_strerror($errno)];
+    }
+
+    protected function clearBuffer()
+    {
+        if ($this->unread) {
+            while (!empty(socket_read($this->socket, 1024))) {}
+        }
     }
 
     protected function close(): void

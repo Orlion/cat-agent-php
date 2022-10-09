@@ -4,11 +4,7 @@ namespace Orlion\CatAgentPhp\Message;
 
 interface MessageTree 
 {
-    public function copy(): MessageTree;
-
     public function getDomain(): string;
-
-    public function getEvents(): array;
 
     public function getMessage(): ?Message;
 
@@ -23,8 +19,6 @@ interface MessageTree
     public function getThreadId(): string;
 
     public function getThreadName(): string;
-
-    public function getTransactions(): array;
 
     public function setDomain(string $domain): void;
 

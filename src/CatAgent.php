@@ -106,24 +106,25 @@ class CatAgent
     {
         if (self::isEnabled()) {
             $tree = CatAgent::getManager()->getMessageTree();
-            $messageId = $tree->getMessageId();
-
-            if (is_null($messageId)) {
-                $messageId = CatAgent::getProducer()->createMessageId();
-                $tree->setMessageId($messageId);
+            if (!is_null($tree)) {
+                $messageId = $tree->getMessageId();
+                if (is_null($messageId)) {
+                    $messageId = CatAgent::getProducer()->createMessageId();
+                    $tree->setMessageId($messageId);
+                }
+    
+                $childId = CatAgent::getProducer()->createRpcMessageId($domain);
+                CatAgent::logEvent(CatAgentConstants::TYPE_REMOTE_CALL, '', Event::SUCCESS, ['childId' => $childId]);
+    
+                $root = $tree->getRootMessageId();
+                if (is_null($root)) {
+                    $root = $messageId;
+                }
+    
+                $ctx->addProperty($ctx::ROOT, $root);
+                $ctx->addProperty($ctx::PARENT, $messageId);
+                $ctx->addProperty($ctx::CHILD, $childId);
             }
-
-            $childId = CatAgent::getProducer()->createRpcMessageId($domain);
-            CatAgent::logEvent(CatAgentConstants::TYPE_REMOTE_CALL, '', Event::SUCCESS, ['childId' => $childId]);
-
-            $root = $tree->getRootMessageId();
-            if (is_null($root)) {
-                $root = $messageId;
-            }
-
-            $ctx->addProperty($ctx::ROOT, $root);
-            $ctx->addProperty($ctx::PARENT, $messageId);
-            $ctx->addProperty($ctx::CHILD, $childId);
         }
     }
 
@@ -131,18 +132,20 @@ class CatAgent
     {
         if (self::isEnabled()) {
             $tree = CatAgent::getManager()->getMessageTree();
-            $childId = $ctx->getProperty(CatAgentContext::CHILD);
-            $rootId = $ctx->getProperty(CatAgentContext::ROOT);
-            $parentId = $ctx->getProperty(CatAgentContext::PARENT);
-
-            if ($parentId === '') {
-                $tree->setParentMessageId($parentId);
-            }
-            if ($rootId === '') {
-                $tree->setRootMessageId($rootId);
-            }
-            if ($childId === '') {
-                $tree->setMessageId($childId);
+            if (!is_null($tree)) {
+                $childId = $ctx->getProperty(CatAgentContext::CHILD);
+                $rootId = $ctx->getProperty(CatAgentContext::ROOT);
+                $parentId = $ctx->getProperty(CatAgentContext::PARENT);
+    
+                if ($parentId !== '') {
+                    $tree->setParentMessageId($parentId);
+                }
+                if ($rootId !== '') {
+                    $tree->setRootMessageId($rootId);
+                }
+                if ($childId !== '') {
+                    $tree->setMessageId($childId);
+                }
             }
         }
     }

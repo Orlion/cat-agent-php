@@ -19,14 +19,15 @@ class DefaultMessageManager implements MessageManager
 
     public function __construct(string $domain, CatAgentClient $client)
     {
-        $this->tree = new DefaultMessageTree($domain);
         $this->stack = new \SplStack();
 
+        $pid = getmypid();
+        $this->tree = new DefaultMessageTree();
         $this->tree->setDomain($domain);
         $this->tree->setThreadGroupName('PHP-GROUP');
-        $pid = getmypid();
         $this->tree->setThreadId($pid);
         $this->tree->setThreadName('PHP-' . $pid);
+
         $this->length = 1;
 
         $this->client = $client;
@@ -56,10 +57,7 @@ class DefaultMessageManager implements MessageManager
             }
 
             if ($this->stack->isEmpty()) {
-                $tree = $this->tree->copy();
-                $tree->setMessage(null);
-
-                $this->flush($this->tree);
+                $this->flush();
             }
         }
     }
@@ -67,10 +65,8 @@ class DefaultMessageManager implements MessageManager
     public function add(Message $message): void
     {
         if ($this->stack->isEmpty()) {
-            $tree = $this->tree->copy();
-
-            $tree->setMessage($message);
-            $this->flush($tree);
+            $this->tree->setMessage($message);
+            $this->flush();
         } else {
             $parent = $this->stack->top();
 
@@ -87,9 +83,18 @@ class DefaultMessageManager implements MessageManager
     public function flush(): void
     {
         $this->client->send($this->tree);
+        $this->resetTree();
     }
 
-    public function getMessageTree(): MessageTree
+    protected function resetTree()
+    {
+        $this->tree->setMessage(null);
+        $this->tree->setMessageId(null);
+        $this->tree->setParentMessageId(null);
+        $this->tree->setRootMessageId(null);
+    }
+
+    public function getMessageTree(): ?MessageTree
     {
         return $this->tree;
     }
