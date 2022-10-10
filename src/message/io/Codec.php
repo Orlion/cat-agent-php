@@ -95,7 +95,11 @@ class Codec
 
         $data = $message->getData();
         if (!is_null($data)) {
-            $elements[] = json_encode($data, JSON_UNESCAPED_UNICODE);
+            if (is_scalar($data)) {
+                $elements[] = $data;
+            } else {
+                $elements[] = json_encode($data, JSON_UNESCAPED_UNICODE);
+            }
         } else {
             $elements[] = '';
         }

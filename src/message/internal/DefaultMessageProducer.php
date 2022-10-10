@@ -32,11 +32,11 @@ class DefaultMessageProducer implements MessageProducer
         return $this->client->createMessageId($domain);
     }
 
-    public function logEvent(string $type, string $name, string $status = Message::SUCCESS, array $data = []): void
+    public function logEvent(string $type, string $name, string $status = Message::SUCCESS, $data = null): void
     {
         $event = $this->newEvent($type, $name);
 
-        if (count($data) > 0) {
+        if (!is_null($data)) {
             $event->setData($data);
         }
 

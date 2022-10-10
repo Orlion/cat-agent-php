@@ -9,6 +9,7 @@ use Orlion\CatAgentPhp\Message\Transaction;
 use Orlion\CatAgentPhp\Message\Internal\DefaultMessageProducer;
 use Orlion\CatAgentPhp\Message\Internal\DefaultMessageManager;
 use Orlion\CatAgentPhp\Message\Io\CatAgentClient;
+use Orlion\CatAgentPhp\Message\Message;
 use Orlion\CatAgentPhp\Message\MessageManager;
 use Orlion\CatAgentPhp\Util\Time;
 
@@ -66,7 +67,7 @@ class CatAgent
         return self::$enabled;
     }
 
-    public static function logEvent(string $type, string $name, string $status = '', array $data = []): void
+    public static function logEvent(string $type, string $name, string $status = Message::SUCCESS, $data = null): void
     {
         if (self::isEnabled()) {
             CatAgent::getProducer()->logEvent($type, $name, $status, $data);
@@ -114,7 +115,7 @@ class CatAgent
                 }
     
                 $childId = CatAgent::getProducer()->createRpcMessageId($domain);
-                CatAgent::logEvent(CatAgentConstants::TYPE_REMOTE_CALL, '', Event::SUCCESS, ['childId' => $childId]);
+                CatAgent::logEvent(CatAgentConstants::TYPE_REMOTE_CALL, '', Event::SUCCESS, $childId);
     
                 $root = $tree->getRootMessageId();
                 if (is_null($root)) {

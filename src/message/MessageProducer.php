@@ -8,7 +8,7 @@ interface MessageProducer
 
     public function createRpcMessageId(string $domain): string;
 
-    public function logEvent(string $type, string $name, string $status = '', array $data = []): void;
+    public function logEvent(string $type, string $name, string $status = Message::SUCCESS, $data = null): void;
 
     public function newEvent(string $type, string $name): Event;
 

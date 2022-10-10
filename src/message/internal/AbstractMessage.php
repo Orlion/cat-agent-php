@@ -8,12 +8,12 @@ use Orlion\CatAgentPhp\Util\Time;
 abstract class AbstractMessage implements Message
 {
     protected $type;
-    private $name;
-    private $status = self::SUCCESS;
-    private $statusCode = 1;
-    private $timestampInMillis = 0;
-    private $data;
-    private $completed = false;
+    protected $name;
+    protected $status = self::SUCCESS;
+    protected $statusCode = 1;
+    protected $timestampInMillis = 0;
+    protected $data;
+    protected $completed = false;
 
     public function __construct(string $type, string $name)
     {
@@ -47,7 +47,7 @@ abstract class AbstractMessage implements Message
         return $this->timestampInMillis;
     }
 
-    public function getData(): ?array
+    public function getData()
     {
         return $this->data;
     }
@@ -71,7 +71,7 @@ abstract class AbstractMessage implements Message
     {
         $this->status = $status;
 
-        if (self::SUCCESS == $this->status) {
+        if (self::SUCCESS === $this->status) {
             $this->statusCode = 1;
         } else {
             $this->statusCode = -1;
@@ -89,17 +89,25 @@ abstract class AbstractMessage implements Message
         $this->timestampInMillis = $timestamp;
     }
 
-    public function setData(array $data): void
+    public function setData($data): void
     {
         $this->data = $data;
     }
 
-    public function addData(array $data): void
+    public function addData($data): void
     {
         if (is_null($this->data)) {
             $this->data = $data;
         } else {
-            $this->data = array_merge($this->data, $data);
+            if (is_array($this->data)) {
+                if (is_array($data)) {
+                    $this->data = array_merge($this->data, $data);
+                } else {
+                    $this->data[] = $data;
+                }
+            } else {
+                $this->data = [$this->data, $data];
+            }
         }
     }
 

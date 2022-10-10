@@ -16,7 +16,7 @@ interface Message
 
     public function getTimestamp(): int;
 
-    public function getData(): ?array;
+    public function getData();
 
     public function isCompleted(): bool;
 
@@ -30,9 +30,9 @@ interface Message
 
     public function setTimestamp(int $timestamp): void;
 
-    public function setData(array $data): void;
+    public function setData($data): void;
 
-    public function addData(array $data): void;
+    public function addData($data): void;
 
     public function complete(): void;
 }

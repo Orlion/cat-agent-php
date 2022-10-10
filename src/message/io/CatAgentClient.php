@@ -60,7 +60,6 @@ class CatAgentClient
         $this->clearBuffer();
         $request = $this->codec->encodeCreateMessageIdRequest($domain);
         $this->writeRequest($request);
-
         list($status, $length, $messageId) = $this->readResponse();
         if ($status !== Codec::STATUS_OK) {
             throw new CatAgentException(sprintf('%s response unsuccessful status: %d', $this->serverAddr, $status));
@@ -103,6 +102,7 @@ class CatAgentClient
 
     protected function writeRequest(string $request)
     {
+        echo $request . PHP_EOL;
         $length = strlen($request);
         while (true) {
             $sent = socket_write($this->socket, $request, $length);
