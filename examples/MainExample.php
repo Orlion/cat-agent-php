@@ -58,7 +58,7 @@ class MainExample
 
         list($result, $success) = $this->doRequset($url, $params, $headers);
         if (!$success) {
-            //$callTrans->setStatus('failed');
+            $callTrans->setStatus('failed');
         }
 
         $callTrans->complete();
@@ -66,9 +66,9 @@ class MainExample
 
     protected function doRequset(string $url, array $params, array $headers): array
     {
-        //usleep(1000 * rand(10, 1500));
+        usleep(1000 * rand(10, 1500));
         $result = '{"k":"v"}';
-        $success = rand(1, 10) > 5;
+        $success = rand(1, 10) > 7;
         return [$result, $success];
     }
 
@@ -78,10 +78,10 @@ class MainExample
 
         CatAgent::logEvent('SQL.name', $sql);
 
-        //usleep(1000 * rand(10, 1500));
+        usleep(1000 * rand(10, 1500));
 
         if (rand(0, 10) > 7) {
-            //$sqlTrans->setStatus('sql error msg');
+            $sqlTrans->setStatus('sql error msg');
         }
 
         $sqlTrans->complete();
@@ -95,10 +95,10 @@ class MainExample
 
         CatAgent::logEvent('Redis.cmd', $cmd);
 
-        //usleep(1000 * rand(5, 100));
+        usleep(1000 * rand(5, 100));
 
         if (rand(0, 10) > 7) {
-            //$sqlTrans->setStatus('redis error msg');
+            $sqlTrans->setStatus('redis error msg');
         }
 
         $sqlTrans->complete();
