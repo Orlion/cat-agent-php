@@ -10,7 +10,7 @@ class MainExample
 {
     public function __construct()
     {
-        CatAgent::init('test.cat-agent-sample.com', '127.0.0.1:2380');
+        CatAgent::init('demo.cat-agent.com', 'unix:///var/run/cat-agent.sock');
     }
 
     public function run()
@@ -66,7 +66,7 @@ class MainExample
 
     protected function doRequset(string $url, array $params, array $headers): array
     {
-        usleep(1000 * rand(10, 1500));
+        usleep(100 * rand(10, 1500));
         $result = '{"k":"v"}';
         $success = rand(1, 10) > 7;
         return [$result, $success];
@@ -78,7 +78,7 @@ class MainExample
 
         CatAgent::logEvent('SQL.name', $sql);
 
-        usleep(1000 * rand(10, 1500));
+        usleep(100 * rand(10, 1500));
 
         if (rand(0, 10) > 7) {
             $sqlTrans->setStatus('sql error msg');
@@ -95,7 +95,7 @@ class MainExample
 
         CatAgent::logEvent('Redis.cmd', $cmd);
 
-        usleep(1000 * rand(5, 100));
+        usleep(100 * rand(5, 100));
 
         if (rand(0, 10) > 7) {
             $sqlTrans->setStatus('redis error msg');

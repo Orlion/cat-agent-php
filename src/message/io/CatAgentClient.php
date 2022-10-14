@@ -10,22 +10,21 @@ class CatAgentClient
     const DEFAULT_PORT = 2280;
 
     private $serverAddr;
-    private $protocol;
+    private $domain;
     private $address;
     private $port;
     private $codec;
     private $socket;
     private $connected = false;
-    private $unread = false;
 
     public function __construct(string $serverAddr)
     {
         $this->serverAddr = $serverAddr;
-        if (strpos($serverAddr, 'unix:') === 0) {
-            $this->protocol = AF_UNIX;
-            $this->address = $serverAddr;
+        if (strpos($serverAddr, 'unix://') === 0) {
+            $this->domain = AF_UNIX;
+            $this->address = substr($serverAddr, 7);
         } else {
-            $this->protocol = AF_INET;
+            $this->domain = AF_INET;
             $serverArr = explode(':', $serverAddr);
             $serverArrCount = count($serverArr);
             if ($serverArrCount == 1) {
@@ -51,13 +50,11 @@ class CatAgentClient
         $this->connect();
         $request = $this->codec->encodeSendMessageRequest($tree);
         $this->writeRequest($request);
-        $this->unread = true;
     }
 
     public function createMessageId(string $domain): string
     {
         $this->connect();
-        $this->clearBuffer();
         $request = $this->codec->encodeCreateMessageIdRequest($domain);
         $this->writeRequest($request);
         list($status, $length, $messageId) = $this->readResponse();
@@ -75,17 +72,16 @@ class CatAgentClient
         }
 
         if (empty($this->socket)) {
-            $this->socket = @socket_create($this->protocol, SOCK_STREAM, SOL_TCP);
+            $this->socket = socket_create($this->domain, SOCK_STREAM, 0);
             if ($this->socket === false) {
-                list($errno, $errmsg) = $this->getLastSocketErr();
-                throw new CatAgentException(sprintf('create socket to %s failed, errno: %d, errmsg: %s', $this->serverAddr, $errno, $errmsg));
+                throw new CatAgentException(sprintf('create socket to %s failed', $this->serverAddr));
             }
         }
 
         socket_set_option($this->socket, SOL_SOCKET, SO_SNDTIMEO, ['sec'  =>  0, 'usec'   =>  10000]);
         socket_set_option($this->socket, SOL_SOCKET, SO_RCVTIMEO, ['sec'  =>  0, 'usec'   =>  10000]);
 
-        if ($this->protocol == AF_UNIX) {
+        if ($this->domain == AF_UNIX) {
             $conn = @socket_connect($this->socket, $this->address);
         } else {
             $conn = @socket_connect($this->socket, $this->address, $this->port);
@@ -93,11 +89,10 @@ class CatAgentClient
 
         if ($conn === false) {
             list($errno, $errmsg) = $this->getLastSocketErr();
-            throw new CatAgentException(sprintf('socket connect to %s failed, errno: %d, errmsg: %s', $this->serverAddr, $errno, $errmsg));
+            throw new CatAgentException(sprintf('socket connect to %s failed, address: %s, errno: %d, errmsg: %s', $this->serverAddr, $this->address, $errno, $errmsg));
         }
 
         $this->connected = true;
-        $this->unread = false;
     }
 
     protected function writeRequest(string $request)
@@ -158,13 +153,6 @@ class CatAgentClient
     {
         $errno = socket_last_error($this->socket);
         return [$errno, socket_strerror($errno)];
-    }
-
-    protected function clearBuffer()
-    {
-        if ($this->unread) {
-            while (!empty(socket_read($this->socket, 1024))) {}
-        }
     }
 
     protected function close(): void
