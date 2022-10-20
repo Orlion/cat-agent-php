@@ -2,24 +2,46 @@
 
 namespace Orlion\CatAgentPhp\Message\Internal;
 
-use Orlion\CatAgentPhp\Message\Io\CatAgentClient;
+use Orlion\CatAgentPhp\Exception\IoException;
+use Orlion\CatAgentPhp\Message\Io\TcpSocket;
 use Orlion\CatAgentPhp\Message\Message;
 use Orlion\CatAgentPhp\Message\MessageManager;
 use Orlion\CatAgentPhp\Message\MessageTree;
 use Orlion\CatAgentPhp\Message\Transaction;
+use SplStack;
 
+/**
+ * DefaultMessageManager
+ *
+ * @author Orlion <orlionml@gmail.com>
+ * @package Orlion\CatAgentPhp\Message\Internal
+ */
 class DefaultMessageManager implements MessageManager
 {
-    const SIZE = 2000;
-    
+    /**
+     * @var DefaultMessageTree
+     */
     private $tree;
+    /**
+     * @var SplStack
+     */
     private $stack;
+    /**
+     * @var int
+     */
     private $length;
-    private $client;
+    /**
+     * @var TcpSocket
+     */
+    private $tcpSocket;
 
-    public function __construct(string $domain, CatAgentClient $client)
+    /**
+     * @param string $domain
+     * @param TcpSocket $tcpSocket
+     */
+    public function __construct(string $domain, TcpSocket $tcpSocket)
     {
-        $this->stack = new \SplStack();
+        $this->stack = new SplStack();
 
         $pid = getmypid();
         $this->tree = new DefaultMessageTree();
@@ -30,9 +52,13 @@ class DefaultMessageManager implements MessageManager
 
         $this->length = 1;
 
-        $this->client = $client;
+        $this->tcpSocket = $tcpSocket;
     }
 
+    /**
+     * @param Transaction $transaction
+     * @return void
+     */
     public function start(Transaction $transaction): void
     {
         if (!$this->stack->isEmpty()) {
@@ -45,6 +71,10 @@ class DefaultMessageManager implements MessageManager
         $this->stack->push($transaction);
     }
 
+    /**
+     * @param Transaction $transaction
+     * @return void
+     */
     public function end(Transaction $transaction): void
     {
         if (!$this->stack->isEmpty()) {
@@ -62,6 +92,10 @@ class DefaultMessageManager implements MessageManager
         }
     }
 
+    /**
+     * @param Message $message
+     * @return void
+     */
     public function add(Message $message): void
     {
         if ($this->stack->isEmpty()) {
@@ -74,18 +108,32 @@ class DefaultMessageManager implements MessageManager
         }
     }
 
+    /**
+     * @param Message $message
+     * @param Transaction $transaction
+     * @return void
+     */
     private function addTransactionChild(Message $message, Transaction $transaction): void
     {
         $transaction->addChild($message);
         $this->length++;
     }
 
-    public function flush(): void
+    /**
+     * @return void
+     */
+    protected function flush(): void
     {
-        $this->client->send($this->tree);
+        try {
+            $this->tcpSocket->send($this->tree);
+        } catch (IoException $e) {
+        }
         $this->resetTree();
     }
 
+    /**
+     * @return void
+     */
     protected function resetTree()
     {
         $this->tree->setMessage(null);
@@ -94,6 +142,9 @@ class DefaultMessageManager implements MessageManager
         $this->tree->setRootMessageId(null);
     }
 
+    /**
+     * @return MessageTree|null
+     */
     public function getMessageTree(): ?MessageTree
     {
         return $this->tree;

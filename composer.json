@@ -15,5 +15,8 @@
             "email": "orlionml@gmail.com"
         }
     ],
-    "require": {}
+    "require": {
+      "ext-sockets": "*",
+      "ext-json": "*"
+    }
 }

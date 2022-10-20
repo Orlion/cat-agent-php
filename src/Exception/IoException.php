@@ -5,12 +5,12 @@ namespace Orlion\CatAgentPhp\Exception;
 use RuntimeException;
 
 /**
- * CatAgentException
+ * IoException
  *
  * @author Orlion <orlionml@gmail.com>
  * @package Orlion\CatAgentPhp\Exception
  */
-class CatAgentException extends RuntimeException
+class IoException extends RuntimeException
 {
-    
+
 }

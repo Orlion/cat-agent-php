@@ -1,8 +1,6 @@
 <?php
 
-namespace Examples;
-
-use Orlion\CatAgentPhp\CatAgentContext;
+namespace Orlion\CatAgentPhp;
 
 class CatAgentContextImpl implements CatAgentContext
 {

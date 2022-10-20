@@ -2,28 +2,64 @@
 
 namespace Orlion\CatAgentPhp\Message\Io;
 
-use Orlion\CatAgentPhp\Exception\CatAgentException;
+use Orlion\CatAgentPhp\Exception\IoException;
 use Orlion\CatAgentPhp\Message\Event;
 use Orlion\CatAgentPhp\Message\Message;
 use Orlion\CatAgentPhp\Message\MessageTree;
 use Orlion\CatAgentPhp\Message\Transaction;
 
+/**
+ * Codec
+ *
+ * @author Orlion <orlionml@gmail.com>
+ * @package Orlion\CatAgentPhp\Message\Io
+ */
 class Codec
 {
+    /**
+     *
+     */
     const TAB = "\t";
+    /**
+     *
+     */
     const LF = "\n";
-    const CMD_CREATE_MESSGAE_ID = 1;
+    /**
+     *
+     */
+    const CMD_CREATE_MESSAGE_ID = 1;
+    /**
+     *
+     */
     const CMD_SEND_MESSAGE = 2;
+    /**
+     *
+     */
     const REQUEST_HEADER_LEN = 8;
+    /**
+     *
+     */
     const RESPONSE_HEADER_LEN = 8;
+    /**
+     *
+     */
     const STATUS_OK = 0;
 
+    /**
+     * @param MessageTree $tree
+     * @return string
+     * @throws IoException
+     */
     public function encodeSendMessageRequest(MessageTree $tree): string
     {
         $payload = $this->encodeTreeHeader($tree) . $this->encodeMessage($tree->getMessage());
         return $this->encodeRequest(self::CMD_SEND_MESSAGE, $payload);
     }
 
+    /**
+     * @param MessageTree $tree
+     * @return string
+     */
     protected function encodeTreeHeader(MessageTree $tree): string
     {
         $elements = [
@@ -39,19 +75,30 @@ class Codec
         return implode(self::TAB, $elements) . self::LF;
     }
 
-    protected function encodeMessage(Message $message)
+    /**
+     * @param Message $message
+     * @return string
+     * @throws IoException
+     */
+    protected function encodeMessage(Message $message): string
     {
         if ($message instanceof Transaction) {
             $buf = $this->encodeTransaction($message);
         } else if ($message instanceof Event) {
             $buf = $this->encodeLine($message, 'E');
         } else {
-            throw new CatAgentException('encode message failed, unsupported message type');
+            throw new IoException('encode message failed, unsupported message type');
         }
+
         return $buf;
     }
 
-    protected function encodeTransaction(Transaction $transaction)
+    /**
+     * @param Transaction $transaction
+     * @return string
+     * @throws IoException
+     */
+    protected function encodeTransaction(Transaction $transaction): string
     {
         $children = $transaction->getChildren();
         if (empty($children)) {
@@ -71,7 +118,12 @@ class Codec
         }
     }
 
-    protected function encodeLine(Message $message, string $type)
+    /**
+     * @param Message $message
+     * @param string $type
+     * @return string
+     */
+    protected function encodeLine(Message $message, string $type): string
     {
         $elements = [
             $type,
@@ -107,33 +159,47 @@ class Codec
         return implode(self::TAB, $elements) . self::LF;
     }
 
+    /**
+     * @param string $domain
+     * @return string
+     */
     public function encodeCreateMessageIdRequest(string $domain): string
     {
-        return $this->encodeRequest(self::CMD_CREATE_MESSGAE_ID, $domain);
+        return $this->encodeRequest(self::CMD_CREATE_MESSAGE_ID, $domain);
     }
 
+    /**
+     * @param int $cmd
+     * @param string $payload
+     * @return string
+     */
     protected function encodeRequest(int $cmd, string $payload): string
     {
         $payloadLen = strlen($payload);
-        return pack('N', $cmd) . pack('N', $payloadLen + self::REQUEST_HEADER_LEN) . pack("a{$payloadLen}", $payload);
+        return pack('N', $cmd) . pack('N', $payloadLen + self::REQUEST_HEADER_LEN) . pack("a$payloadLen", $payload);
     }
 
-    public function decodeResponseHeader(string $header)
+    /**
+     * @param string $header
+     * @return array
+     * @throws IoException
+     */
+    public function decodeResponseHeader(string $header): array
     {
         $statusArr = unpack('N', substr($header, 0, 4));
         if (!isset($statusArr[1]))
         {
-            throw new CatAgentException(sprintf('response header parse status failed, header: %s', $header));
+            throw new IoException(sprintf('response header parse status failed, header: %s', $header));
         }
 
         $lengthArr = unpack('N', substr($header, 4, 4));
         if (!isset($lengthArr[1]))
         {
-            throw new CatAgentException(sprintf('response header parse length failed, header: %s', $header));
+            throw new IoException(sprintf('response header parse length failed, header: %s', $header));
         }
         $length = $lengthArr[1];
         if ($length < self::RESPONSE_HEADER_LEN) {
-            throw new CatAgentException(sprintf('response header bad length: %d < %d', $length, self::RESPONSE_HEADER_LEN));
+            throw new IoException(sprintf('response header bad length: %d < %d', $length, self::RESPONSE_HEADER_LEN));
         }
 
         return [$statusArr[1], $length];

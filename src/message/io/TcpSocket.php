@@ -2,21 +2,55 @@
 
 namespace Orlion\CatAgentPhp\Message\Io;
 
-use Orlion\CatAgentPhp\Exception\CatAgentException;
+use Orlion\CatAgentPhp\Exception\IoException;
 use Orlion\CatAgentPhp\Message\MessageTree;
 
-class CatAgentClient
+/**
+ * TcpSocket
+ *
+ * @author Orlion <orlionml@gmail.com>
+ * @package Orlion\CatAgentPhp\Message\Io
+ */
+class TcpSocket
 {
+    /**
+     *
+     */
     const DEFAULT_PORT = 2280;
 
+    /**
+     * @var string
+     */
     private $serverAddr;
+    /**
+     * @var int
+     */
     private $domain;
+    /**
+     * @var false|mixed|string
+     */
     private $address;
+    /**
+     * @var int|mixed|string
+     */
     private $port;
+    /**
+     * @var Codec
+     */
     private $codec;
+    /**
+     * @var
+     */
     private $socket;
+    /**
+     * @var bool
+     */
     private $connected = false;
 
+    /**
+     * @param string $serverAddr
+     * @throws IoException
+     */
     public function __construct(string $serverAddr)
     {
         $this->serverAddr = $serverAddr;
@@ -38,13 +72,18 @@ class CatAgentClient
                 }
                 $this->port = $serverArr[1];
             } else {
-                throw new CatAgentException(sprintf('server\'s address: %s is invalid',  $serverAddr));
+                throw new IoException(sprintf('server\'s address: %s is invalid',  $serverAddr));
             }
         }
 
         $this->codec = new Codec();
     }
 
+    /**
+     * @param MessageTree $tree
+     * @return void
+     * @throws IoException
+     */
     public function send(MessageTree $tree): void
     {
         $this->connect();
@@ -52,20 +91,30 @@ class CatAgentClient
         $this->writeRequest($request);
     }
 
+    /**
+     * @param string $domain
+     * @return string
+     * @throws IoException
+     */
     public function createMessageId(string $domain): string
     {
         $this->connect();
         $request = $this->codec->encodeCreateMessageIdRequest($domain);
         $this->writeRequest($request);
-        list($status, $length, $messageId) = $this->readResponse();
-        if ($status !== Codec::STATUS_OK) {
-            throw new CatAgentException(sprintf('%s response unsuccessful status: %d', $this->serverAddr, $status));
+        $response = $this->readResponse();
+        if ($response[0] !== Codec::STATUS_OK)
+        {
+            throw new IoException(sprintf('create messageId failed with status: %d', $response[0]));
         }
 
-        return $messageId;
+        return $response[2];
     }
 
-    protected function connect()
+    /**
+     * @return void
+     * @throws IoException
+     */
+    protected function connect(): void
     {
         if ($this->connected) {
             return ;
@@ -74,7 +123,7 @@ class CatAgentClient
         if (empty($this->socket)) {
             $this->socket = socket_create($this->domain, SOCK_STREAM, 0);
             if ($this->socket === false) {
-                throw new CatAgentException(sprintf('create socket to %s failed', $this->serverAddr));
+                throw new IoException(sprintf('create socket to %s failed', $this->serverAddr));
             }
         }
 
@@ -88,14 +137,19 @@ class CatAgentClient
         }
 
         if ($conn === false) {
-            list($errno, $errmsg) = $this->getLastSocketErr();
-            throw new CatAgentException(sprintf('socket connect to %s failed, address: %s, errno: %d, errmsg: %s', $this->serverAddr, $this->address, $errno, $errmsg));
+            list($errno, $errMsg) = $this->getLastSocketErr();
+            throw new IoException(sprintf('socket connect to %s failed, address: %s, errno: %d, errMsg: %s', $this->serverAddr, $this->address, $errno, $errMsg));
         }
 
         $this->connected = true;
     }
 
-    protected function writeRequest(string $request)
+    /**
+     * @param string $request
+     * @return void
+     * @throws IoException
+     */
+    protected function writeRequest(string $request): void
     {
         echo $request . PHP_EOL;
         $length = strlen($request);
@@ -103,8 +157,8 @@ class CatAgentClient
             $sent = socket_write($this->socket, $request, $length);
             if ($sent === false) {
                 $this->close();
-                list($errno, $errmsg) = $this->getLastSocketErr();
-                throw new CatAgentException(sprintf('write request to %s failed, errno: %d, errmsg: %s', $this->serverAddr, $errno, $errmsg));
+                list($errno, $errMsg) = $this->getLastSocketErr();
+                throw new IoException(sprintf('write request to %s failed, errno: %d, errMsg: %s', $this->serverAddr, $errno, $errMsg));
             }
             if ($sent < $length) {
                 $request = substr($request, $sent);
@@ -115,46 +169,52 @@ class CatAgentClient
         }
     }
 
+    /**
+     * @return array
+     * @throws IoException
+     */
     protected function readResponse(): array
     {
         $len = socket_recv($this->socket, $header, Codec::RESPONSE_HEADER_LEN, MSG_WAITALL);
         if ($len === 0) {
             $this->close();
-            throw new CatAgentException(sprintf('read response header from %s failed, connection closed', $this->serverAddr));
+            throw new IoException(sprintf('read response header from %s failed, connection closed', $this->serverAddr));
         } else if ($len === false) {
             $this->close();
-            list($errno, $errmsg) = $this->getLastSocketErr();
-            throw new CatAgentException(sprintf('read response header from %s failed, errno: %d, errmsg: %s', $this->serverAddr, $errno, $errmsg));
+            list($errno, $errMsg) = $this->getLastSocketErr();
+            throw new IoException(sprintf('read response header from %s failed, errno: %d, errMsg: %s', $this->serverAddr, $errno, $errMsg));
         }
 
         list($status, $length) = $this->codec->decodeResponseHeader($header);
-        if ($status !== Codec::STATUS_OK)
-        {
-            throw new CatAgentException(sprintf('%s response unsuccessful status: %d', $this->serverAddr, $status));
-        }
 
         $payload = '';
         if ($length > Codec::RESPONSE_HEADER_LEN) {
             $len = socket_recv($this->socket, $payload, $length - Codec::RESPONSE_HEADER_LEN, MSG_WAITALL);
             if ($len === 0) {
                 $this->close();
-                throw new CatAgentException(sprintf('read response payload from %s failed, connection closed', $this->serverAddr));
+                throw new IoException(sprintf('read response payload from %s failed, connection closed', $this->serverAddr));
             } else if ($len === false) {
                 $this->close();
-                list($errno, $errmsg) = $this->getLastSocketErr();
-                throw new CatAgentException(sprintf('read response payload from %s failed, errno: %d, errmsg: %s', $this->serverAddr, $errno, $errmsg));
+                list($errno, $errMsg) = $this->getLastSocketErr();
+                throw new IoException(sprintf('read response payload from %s failed, errno: %d, errMsg: %s', $this->serverAddr, $errno, $errMsg));
             }
         }
 
         return [$status, $length, $payload];
     }
 
+    /**
+     * @return array
+     */
     protected function getLastSocketErr(): array
     {
         $errno = socket_last_error($this->socket);
         return [$errno, socket_strerror($errno)];
     }
 
+    /**
+     * @return void
+     */
     protected function close(): void
     {
         if ($this->connected) {
@@ -164,6 +224,9 @@ class CatAgentClient
         $this->socket = null;
     }
 
+    /**
+     *
+     */
     public function __destruct()
     {
         $this->close();

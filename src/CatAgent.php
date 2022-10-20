@@ -3,51 +3,93 @@
 namespace Orlion\CatAgentPhp;
 
 use Orlion\CatAgentPhp\Exception\CatAgentException;
+use Orlion\CatAgentPhp\Exception\IoException;
 use Orlion\CatAgentPhp\Message\Event;
+use Orlion\CatAgentPhp\Message\Internal\NullMessage;
 use Orlion\CatAgentPhp\Message\MessageProducer;
 use Orlion\CatAgentPhp\Message\Transaction;
 use Orlion\CatAgentPhp\Message\Internal\DefaultMessageProducer;
 use Orlion\CatAgentPhp\Message\Internal\DefaultMessageManager;
-use Orlion\CatAgentPhp\Message\Io\CatAgentClient;
+use Orlion\CatAgentPhp\Message\Io\TcpSocket;
 use Orlion\CatAgentPhp\Message\Message;
 use Orlion\CatAgentPhp\Message\MessageManager;
 use Orlion\CatAgentPhp\Util\Time;
 
+/**
+ * CatAgent
+ *
+ * @author Orlion <orlionml@gmail.com>
+ * @package Orlion\CatAgentPhp
+ */
 class CatAgent
 {
+    /**
+     * @var
+     */
     private static $producer;
+    /**
+     * @var
+     */
     private static $manager;
+    /**
+     * @var bool
+     */
     private static $enabled = true;
+    /**
+     * @var bool
+     */
     private static $init = false;
 
+    /**
+     * Initialize cat agent
+     *
+     * @param string $domain application domain
+     * @param string $serverAddr cat agent's address, for example, unix:///var/run/cat-agent.sock
+     * @return void
+     * @throws IoException
+     */
     public static function init(string $domain, string $serverAddr): void
     {
         if (!self::$init) {
-            $client = new CatAgentClient($serverAddr);
-            self::$manager = new DefaultMessageManager($domain, $client);
-            self::$producer = new DefaultMessageProducer(self::$manager, $client, $domain);
+            $tcpSocket = new TcpSocket($serverAddr);
+            self::$manager = new DefaultMessageManager($domain, $tcpSocket);
+            self::$producer = new DefaultMessageProducer(self::$manager, $tcpSocket, $domain);
             
             self::$init = true;
         }
     }
-    
+
+    /**
+     * @return void
+     * @throws CatAgentException
+     */
     private static function checkInitialize(): void
     {
         if (!self::$init) {
-            throw new CatAgentException('cat has not been initialized');
+            throw new CatAgentException('cat agent has not been initialized');
         }
     }
 
+    /**
+     * @return void
+     */
     public static function enable(): void
     {
         self::$enabled = true;
     }
 
+    /**
+     * @return void
+     */
     public static function disable(): void
     {
         self::$enabled = false;
     }
 
+    /**
+     * @return MessageManager
+     * @throws CatAgentException
+     */
     public static function getManager(): MessageManager
     {
         self::checkInitialize();
@@ -55,6 +97,10 @@ class CatAgent
         return self::$manager;
     }
 
+    /**
+     * @return MessageProducer
+     * @throws CatAgentException
+     */
     public static function getProducer(): MessageProducer
     {
         self::checkInitialize();
@@ -62,11 +108,22 @@ class CatAgent
         return self::$producer;
     }
 
+    /**
+     * @return bool
+     */
     public static function isEnabled(): bool
     {
         return self::$enabled;
     }
 
+    /**
+     * @param string $type
+     * @param string $name
+     * @param string $status
+     * @param mixed $data
+     * @return void
+     * @throws CatAgentException
+     */
     public static function logEvent(string $type, string $name, string $status = Message::SUCCESS, $data = null): void
     {
         if (self::isEnabled()) {
@@ -74,20 +131,43 @@ class CatAgent
         }
     }
 
+    /**
+     * @param string $type
+     * @param string $name
+     * @return Event
+     * @throws CatAgentException
+     */
     public static function newEvent(string $type, string $name): Event
     {
         if (self::isEnabled()) {
             return CatAgent::getProducer()->newEvent($type, $name);
         }
+
+        return new NullMessage();
     }
 
+    /**
+     * @param string $type
+     * @param string $name
+     * @return Transaction
+     * @throws CatAgentException
+     */
     public static function newTransaction(string $type, string $name): Transaction
     {
         if (self::isEnabled()) {
             return CatAgent::getProducer()->newTransaction($type, $name);
         }
+
+        return new NullMessage();
     }
 
+    /**
+     * @param string $type
+     * @param string $name
+     * @param int $duration
+     * @return Transaction
+     * @throws CatAgentException
+     */
     public static function newTransactionWithDuration(string $type, string $name, int $duration): Transaction
     {
         if (self::isEnabled()) {
@@ -101,35 +181,52 @@ class CatAgent
 
             return $transaction;
         }
+
+        return new NullMessage();
     }
 
-    public static function logRemoteCallClient(CatAgentContext $ctx, string $domain = 'default')
+    /**
+     * @param CatAgentContext $ctx
+     * @param string $domain
+     * @return void
+     * @throws CatAgentException
+     */
+    public static function logRemoteCallClient(CatAgentContext $ctx, string $domain = 'default'): void
     {
         if (self::isEnabled()) {
             $tree = CatAgent::getManager()->getMessageTree();
             if (!is_null($tree)) {
                 $messageId = $tree->getMessageId();
-                if (is_null($messageId)) {
-                    $messageId = CatAgent::getProducer()->createMessageId();
-                    $tree->setMessageId($messageId);
+                try {
+                    if (is_null($messageId)) {
+                        $messageId = CatAgent::getProducer()->createMessageId();
+                        $tree->setMessageId($messageId);
+                    }
+
+                    $childId = CatAgent::getProducer()->createRpcMessageId($domain);
+                    CatAgent::logEvent(CatAgentConstants::TYPE_REMOTE_CALL, '', Message::SUCCESS, $childId);
+
+                    $root = $tree->getRootMessageId();
+                    if (is_null($root)) {
+                        $root = $messageId;
+                    }
+
+                    $ctx->addProperty($ctx::ROOT, $root);
+                    $ctx->addProperty($ctx::PARENT, $messageId);
+                    $ctx->addProperty($ctx::CHILD, $childId);
+                } catch (IoException $e) {
+
                 }
-    
-                $childId = CatAgent::getProducer()->createRpcMessageId($domain);
-                CatAgent::logEvent(CatAgentConstants::TYPE_REMOTE_CALL, '', Event::SUCCESS, $childId);
-    
-                $root = $tree->getRootMessageId();
-                if (is_null($root)) {
-                    $root = $messageId;
-                }
-    
-                $ctx->addProperty($ctx::ROOT, $root);
-                $ctx->addProperty($ctx::PARENT, $messageId);
-                $ctx->addProperty($ctx::CHILD, $childId);
             }
         }
     }
 
-    public static function logRemoteCallServer(CatAgentContext $ctx)
+    /**
+     * @param CatAgentContext $ctx
+     * @return void
+     * @throws CatAgentException
+     */
+    public static function logRemoteCallServer(CatAgentContext $ctx): void
     {
         if (self::isEnabled()) {
             $tree = CatAgent::getManager()->getMessageTree();
@@ -151,6 +248,9 @@ class CatAgent
         }
     }
 
+    /**
+     *
+     */
     private function __construct()
     {
         

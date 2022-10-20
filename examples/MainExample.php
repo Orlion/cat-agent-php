@@ -5,17 +5,21 @@ namespace Examples;
 use Orlion\CatAgentPhp\CatAgent;
 use Orlion\CatAgentPhp\CatAgentConstants;
 use Orlion\CatAgentPhp\CatAgentContext;
+use Orlion\CatAgentPhp\CatAgentContextImpl;
 
 class MainExample
 {
     public function __construct()
     {
         CatAgent::init('demo.cat-agent.com', 'unix:///var/run/cat-agent.sock');
+        CatAgent::enable();
+        // or
+        // CatAgent::disable();
     }
 
     public function run()
     {
-        echo "RemoteCallExample run\n";
+        echo "MainExample run\n";
         $rootTrans = CatAgent::newTransaction(CatAgentConstants::TYPE_URL, '/index.php');
 
         $ctx = new CatAgentContextImpl();
@@ -36,7 +40,7 @@ class MainExample
         $user = $this->execSql('CatAgentDB', 'select * from user where user_id=?', [rand(1, 10000000)]);
 
         $rootTrans->complete();
-        echo "RemoteCallExample end\n";
+        echo "MainExample end\n";
     }
 
     protected function remoteCall(string $url, array $params)
