@@ -2,6 +2,7 @@
 
 namespace Orlion\CatAgentPhp\Message\Internal;
 
+use Exception;
 use Orlion\CatAgentPhp\Exception\IoException;
 use Orlion\CatAgentPhp\Message\Io\TcpSocket;
 use Orlion\CatAgentPhp\Message\Message;
@@ -34,6 +35,10 @@ class DefaultMessageManager implements MessageManager
      * @var TcpSocket
      */
     private $tcpSocket;
+    /**
+     * @var Exception
+     */
+    private $lastException;
 
     /**
      * @param string $domain
@@ -127,6 +132,7 @@ class DefaultMessageManager implements MessageManager
         try {
             $this->tcpSocket->send($this->tree);
         } catch (IoException $e) {
+            $this->lastException = $e;
         }
         $this->resetTree();
     }
@@ -148,5 +154,13 @@ class DefaultMessageManager implements MessageManager
     public function getMessageTree(): ?MessageTree
     {
         return $this->tree;
+    }
+
+    /**
+     * @return Exception|null
+     */
+    public function getLastException(): ?Exception
+    {
+        return $this->lastException;
     }
 }

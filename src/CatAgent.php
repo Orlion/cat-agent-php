@@ -2,6 +2,7 @@
 
 namespace Orlion\CatAgentPhp;
 
+use Exception;
 use Orlion\CatAgentPhp\Exception\CatAgentException;
 use Orlion\CatAgentPhp\Exception\IoException;
 use Orlion\CatAgentPhp\Message\Event;
@@ -39,6 +40,10 @@ class CatAgent
      * @var bool
      */
     private static $init = false;
+    /**
+     * @var Exception
+     */
+    private static $lastException;
 
     /**
      * Initialize cat agent
@@ -215,7 +220,7 @@ class CatAgent
                     $ctx->addProperty($ctx::PARENT, $messageId);
                     $ctx->addProperty($ctx::CHILD, $childId);
                 } catch (IoException $e) {
-
+                    self::$lastException = $e;
                 }
             }
         }
@@ -246,6 +251,20 @@ class CatAgent
                 }
             }
         }
+    }
+
+    /**
+     * @return Exception|null
+     * @throws CatAgentException
+     */
+    public static function getLastException(): ?Exception
+    {
+        $managerLastException = self::getManager()->getLastException();
+        if (!is_null($managerLastException)) {
+            return $managerLastException;
+        }
+
+        return self::$lastException;
     }
 
     /**

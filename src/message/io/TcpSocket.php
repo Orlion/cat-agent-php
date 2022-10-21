@@ -151,13 +151,12 @@ class TcpSocket
      */
     protected function writeRequest(string $request): void
     {
-        echo $request . PHP_EOL;
         $length = strlen($request);
         while (true) {
-            $sent = socket_write($this->socket, $request, $length);
+            $sent = @socket_write($this->socket, $request, $length);
             if ($sent === false) {
-                $this->close();
                 list($errno, $errMsg) = $this->getLastSocketErr();
+                $this->close();
                 throw new IoException(sprintf('write request to %s failed, errno: %d, errMsg: %s', $this->serverAddr, $errno, $errMsg));
             }
             if ($sent < $length) {
@@ -180,8 +179,8 @@ class TcpSocket
             $this->close();
             throw new IoException(sprintf('read response header from %s failed, connection closed', $this->serverAddr));
         } else if ($len === false) {
-            $this->close();
             list($errno, $errMsg) = $this->getLastSocketErr();
+            $this->close();
             throw new IoException(sprintf('read response header from %s failed, errno: %d, errMsg: %s', $this->serverAddr, $errno, $errMsg));
         }
 
@@ -194,8 +193,8 @@ class TcpSocket
                 $this->close();
                 throw new IoException(sprintf('read response payload from %s failed, connection closed', $this->serverAddr));
             } else if ($len === false) {
-                $this->close();
                 list($errno, $errMsg) = $this->getLastSocketErr();
+                $this->close();
                 throw new IoException(sprintf('read response payload from %s failed, errno: %d, errMsg: %s', $this->serverAddr, $errno, $errMsg));
             }
         }

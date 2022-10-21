@@ -2,6 +2,8 @@
 
 namespace Orlion\CatAgentPhp\Message;
 
+use Exception;
+
 /**
  * MessageManager
  *
@@ -31,4 +33,9 @@ interface MessageManager {
      * @return MessageTree|null
      */
     public function getMessageTree(): ?MessageTree;
+
+    /**
+     * @return Exception|null
+     */
+    public function getLastException(): ?Exception;
 }

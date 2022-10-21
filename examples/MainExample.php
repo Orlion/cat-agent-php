@@ -40,6 +40,11 @@ class MainExample
         $user = $this->execSql('CatAgentDB', 'select * from user where user_id=?', [rand(1, 10000000)]);
 
         $rootTrans->complete();
+
+        $lastException = CatAgent::getLastException();
+        if (!is_null($lastException)) {
+            echo 'CatAgentException:' . $lastException->getMessage() . PHP_EOL;
+        }
         echo "MainExample end\n";
     }
 
