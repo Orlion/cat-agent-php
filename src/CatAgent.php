@@ -268,6 +268,20 @@ class CatAgent
     }
 
     /**
+     * @return Message|null
+     * @throws CatAgentException
+     */
+    public static function peek(): ?Message
+    {
+        $tree = CatAgent::getManager()->getMessageTree();
+        if (is_null($tree)) {
+            return null;
+        }
+
+        return $tree->getMessage();
+    }
+
+    /**
      *
      */
     private function __construct()

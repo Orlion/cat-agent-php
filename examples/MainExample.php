@@ -108,6 +108,10 @@ class MainExample
 
         if (rand(0, 10) > 7) {
             $sqlTrans->setStatus('redis error msg');
+            $rootMessage = CatAgent::peek();
+            if (!is_null($rootMessage)) {
+                $rootMessage->setStatus('redis error msg');
+            }
         }
 
         $sqlTrans->complete();
