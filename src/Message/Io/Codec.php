@@ -129,7 +129,7 @@ class Codec
             $type,
             $message->getType(),
             $message->getName(),
-            $message->getStatus(),
+            str_replace(self::LF, ' ', str_replace(self::TAB, ' ', $message->getStatus())),
         ];
 
         if ($type === 'T' && $message instanceof Transaction) {
@@ -148,9 +148,9 @@ class Codec
         $data = $message->getData();
         if (!is_null($data)) {
             if (is_scalar($data)) {
-                $elements[] = $data;
+                $elements[] = str_replace(self::LF, ' ', str_replace(self::TAB, ' ', $data));
             } else {
-                $elements[] = json_encode($data, JSON_UNESCAPED_UNICODE);
+                $elements[] = str_replace(self::LF, ' ', str_replace(self::TAB, ' ', json_encode($data, JSON_UNESCAPED_UNICODE)));
             }
         } else {
             $elements[] = '';
